@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador Nexis</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+/* ============================================================
+   EDUCACIONAL DESIGN SYSTEM 2.0.3 — CSS TOKENS
+   ============================================================ */
+:root {
+  /* Colors */
+  --sys-primary: #b971e0;
+  --sys-on-primary: #ffffff;
+  --sys-primary-container: #ead5f6;
+  --sys-on-primary-container: #581a7a;
+  --sys-secondary: #ffaf0a;
+  --sys-on-secondary: #664604;
+  --sys-secondary-container: #ffefce;
+  --sys-on-secondary-container: #332302;
+  --sys-success: #006e1c;
+  --sys-on-success: #ffffff;
+  --sys-success-container: #94f990;
+  --sys-on-success-container: #002204;
+  --sys-info: #0061a4;
+  --sys-on-info: #ffffff;
+  --sys-info-container: #d1e4ff;
+  --sys-background: #fdfdfd;
+  --sys-on-background: #17191c;
+  --sys-surface: #fdfdfd;
+  --sys-on-surface: #17191c;
+  --sys-surface-variant: #dee4ed;
+  --sys-on-surface-variant: #5d6675;
+  --sys-outline: #91a0b8;
+  --sys-outline-variant: #cad3e0;
+  --sys-inverse-surface: #2e3238;
+  --sys-inverse-on-surface: #f1f2f4;
+  --surface-1: #f6f7f8;
+  --surface-2: #f3f4f6;
+  --surface-3: #eff1f3;
+  --surface-4: #edeff2;
+  --surface-5: #ebedf0;
+
+  /* Spacing */
+  --space-4xs: 0.25rem;
+  --space-3xs: 0.375rem;
+  --space-2xs: 0.5rem;
+  --space-xs: 0.625rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 2.5rem;
+  --space-3xl: 3rem;
+
+  /* Radius */
+  --radius-1: 32px;
+  --radius-2: 24px;
+  --radius-3: 16px;
+  --radius-4: 8px;
+  --radius-full: 1000px;
+
+  /* Elevation */
+  --elevation-1: 0px 1px 2px 0px rgba(0,0,0,.3), 0px 1px 3px 1px rgba(0,0,0,.15);
+  --elevation-2: 0px 1px 3px 0px rgba(0,0,0,.3), 0px 2px 6px 2px rgba(0,0,0,.15);
+  --elevation-3: 0px 2px 3px 0px rgba(0,0,0,.3), 0px 4px 8px 3px rgba(0,0,0,.15);
+}
+
+/* ============================================================ RESET */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Roboto', sans-serif;
+  background: var(--sys-background);
+  color: var(--sys-on-background);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+/* ============================================================ APP BAR */
+.app-bar {
+  background: var(--sys-surface);
+  border-bottom: 1px solid var(--sys-outline-variant);
+  padding: 0 var(--space-xl);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: var(--elevation-1);
+}
+.app-bar-icon {
+  width: 40px; height: 40px;
+  background: var(--sys-primary);
+  border-radius: var(--radius-4);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--sys-on-primary);
+  font-size: 22px;
+}
+.app-bar-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px; font-weight: 600;
+  color: var(--sys-on-surface);
+  line-height: 24px;
+}
+.app-bar-sub {
+  font-size: 12px;
+  color: var(--sys-on-surface-variant);
+  margin-left: var(--space-2xs);
+  font-weight: 400;
+}
+.app-bar-chip {
+  margin-left: auto;
+  background: var(--sys-primary-container);
+  color: var(--sys-on-primary-container);
+  font-size: 12px; font-weight: 500;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.5px;
+}
+
+/* ============================================================ LAYOUT */
+.page {
+  max-width: 860px;
+  margin: var(--space-xl) auto;
+  padding: 0 var(--space-lg) var(--space-3xl);
+}
+
+/* ============================================================ STEPPER */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: var(--space-xl);
+  padding: var(--space-md) 0;
+}
+.step-item {
+  display: flex; align-items: center; gap: var(--space-sm);
+  flex: 1;
+}
+.step-item:last-child { flex: 0; }
+.step-circle {
+  width: 32px; height: 32px; border-radius: var(--radius-full);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600;
+  border: 2px solid var(--sys-outline-variant);
+  color: var(--sys-on-surface-variant);
+  background: var(--sys-surface);
+  flex-shrink: 0;
+  transition: all .2s;
+  font-family: 'Poppins', sans-serif;
+}
+.step-circle.active { background: var(--sys-primary); border-color: var(--sys-primary); color: var(--sys-on-primary); }
+.step-circle.done { background: var(--sys-primary-container); border-color: var(--sys-primary); color: var(--sys-on-primary-container); }
+.step-label {
+  font-size: 12px; font-weight: 500; color: var(--sys-on-surface-variant);
+  white-space: nowrap;
+  transition: color .2s;
+}
+.step-label.active { color: var(--sys-primary); font-weight: 600; }
+.step-label.done { color: var(--sys-on-primary-container); }
+.step-line {
+  flex: 1; height: 2px;
+  background: var(--sys-outline-variant);
+  margin: 0 var(--space-xs);
+  transition: background .2s;
+}
+.step-line.done { background: var(--sys-primary); }
+
+/* ============================================================ CARD */
+.card {
+  background: var(--sys-surface);
+  border: 1px solid var(--sys-outline-variant);
+  border-radius: var(--radius-3);
+  margin-bottom: var(--space-md);
+  overflow: hidden;
+  transition: border-color .2s, box-shadow .2s;
+}
+.card.active { border-color: var(--sys-primary); box-shadow: var(--elevation-1); }
+.card.done { border-color: var(--sys-outline-variant); background: var(--surface-1); }
+
+.card-header {
+  padding: var(--space-md) var(--space-lg);
+  display: flex; align-items: center; gap: var(--space-md);
+  cursor: pointer; user-select: none;
+}
+.card-header-icon {
+  width: 36px; height: 36px; border-radius: var(--radius-4);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--sys-primary-container);
+  color: var(--sys-on-primary-container);
+  font-size: 20px; flex-shrink: 0;
+}
+.card.active .card-header-icon { background: var(--sys-primary); color: var(--sys-on-primary); }
+.card.done .card-header-icon { background: var(--sys-success-container); color: var(--sys-on-success-container); }
+.card-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px; font-weight: 600;
+  color: var(--sys-on-surface);
+}
+.card-summary {
+  margin-left: auto;
+  font-size: 13px; color: var(--sys-primary);
+  font-weight: 500;
+  text-align: right;
+  max-width: 280px;
+}
+.card-body {
+  padding: 0 var(--space-lg) var(--space-lg);
+  display: none;
+  border-top: 1px solid var(--sys-outline-variant);
+}
+.card.active .card-body { display: block; }
+
+/* ============================================================ FORM ELEMENTS */
+.form-label {
+  display: block;
+  font-size: 12px; font-weight: 500;
+  color: var(--sys-on-surface-variant);
+  margin-bottom: 6px;
+  margin-top: var(--space-md);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.text-field {
+  width: 100%;
+  background: var(--sys-surface);
+  border: 1px solid var(--sys-outline);
+  border-radius: var(--radius-4);
+  color: var(--sys-on-surface);
+  padding: 10px 14px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px; line-height: 20px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  appearance: none;
+}
+.text-field:focus { border-color: var(--sys-primary); border-width: 2px; box-shadow: none; }
+.text-field::placeholder { color: var(--sys-on-surface-variant); }
+select.text-field { cursor: pointer; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-md); }
+@media(max-width:600px){ .grid2,.grid3{ grid-template-columns:1fr; } }
+
+/* ============================================================ CHOICE CHIPS / SEGMENT BUTTONS */
+.chip-group { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-top: var(--space-xs); }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--sys-outline);
+  border-radius: var(--radius-full);
+  font-size: 14px; font-weight: 400;
+  color: var(--sys-on-surface-variant);
+  background: var(--sys-surface);
+  cursor: pointer; user-select: none;
+  transition: all .15s;
+  font-family: 'Roboto', sans-serif;
+}
+.chip:hover { background: var(--sys-primary-container); border-color: var(--sys-primary); color: var(--sys-on-primary-container); }
+.chip.selected { background: var(--sys-primary-container); border-color: var(--sys-primary); color: var(--sys-on-primary-container); font-weight: 500; }
+.chip .material-icons-outlined { font-size: 18px; }
+
+/* ============================================================ SEGMENT CARDS */
+.seg-list { display: flex; flex-direction: column; gap: var(--space-sm); margin-top: var(--space-sm); }
+.seg-card {
+  display: flex; align-items: center; gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  border: 1px solid var(--sys-outline-variant);
+  border-radius: var(--radius-3);
+  cursor: pointer; user-select: none;
+  background: var(--sys-surface);
+  transition: all .15s;
+}
+.seg-card:hover { border-color: var(--sys-primary); background: var(--surface-1); }
+.seg-card.selected { border-color: var(--sys-primary); background: var(--sys-primary-container); }
+.seg-card-check {
+  width: 22px; height: 22px; border-radius: 6px;
+  border: 2px solid var(--sys-outline);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 14px; font-weight: 700;
+  transition: all .15s; color: transparent;
+}
+.seg-card.selected .seg-card-check { background: var(--sys-primary); border-color: var(--sys-primary); color: var(--sys-on-primary); }
+.seg-card-icon { font-size: 24px; color: var(--sys-on-surface-variant); flex-shrink: 0; }
+.seg-card.selected .seg-card-icon { color: var(--sys-on-primary-container); }
+.seg-card-text { flex: 1; }
+.seg-card-label { font-size: 14px; font-weight: 500; color: var(--sys-on-surface); }
+.seg-card.selected .seg-card-label { color: var(--sys-on-primary-container); }
+.seg-card-desc { font-size: 12px; color: var(--sys-on-surface-variant); margin-top: 2px; }
+
+/* ============================================================ OPT ITEMS */
+.opt-section { margin-top: var(--space-lg); }
+.opt-section-title {
+  font-size: 11px; font-weight: 600;
+  color: var(--sys-on-surface-variant);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: var(--space-sm);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--sys-outline-variant);
+  display: flex; align-items: center; gap: 6px;
+}
+.opt-item {
+  display: flex; align-items: center; gap: var(--space-sm);
+  padding: 10px var(--space-md);
+  border: 1px solid var(--sys-outline-variant);
+  border-radius: var(--radius-4);
+  cursor: pointer; margin-bottom: var(--space-xs);
+  transition: all .15s; user-select: none;
+  background: var(--sys-surface);
+}
+.opt-item:hover { border-color: var(--sys-primary); background: var(--surface-1); }
+.opt-item.selected { border-color: var(--sys-primary); background: var(--sys-primary-container); }
+.opt-check {
+  width: 18px; height: 18px; border-radius: 4px;
+  border: 2px solid var(--sys-outline);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 11px; font-weight: 700;
+  color: transparent; transition: all .15s;
+}
+.opt-item.selected .opt-check { background: var(--sys-primary); border-color: var(--sys-primary); color: var(--sys-on-primary); }
+.opt-label { font-size: 14px; color: var(--sys-on-surface); }
+.opt-item.selected .opt-label { color: var(--sys-on-primary-container); font-weight: 500; }
+
+/* ============================================================ PRICE INPUTS */
+.price-section { margin-top: var(--space-lg); }
+.price-section-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 600;
+  color: var(--sys-on-primary-container);
+  background: var(--sys-primary-container);
+  padding: 4px 12px; border-radius: var(--radius-full);
+  letter-spacing: 0.5px; text-transform: uppercase;
+  margin-bottom: var(--space-md);
+}
+.price-field { margin-bottom: var(--space-sm); }
+.input-wrap { position: relative; }
+.input-wrap .prefix {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--sys-on-surface-variant); font-size: 14px; pointer-events: none;
+}
+.input-wrap .text-field { padding-left: 32px; }
+
+/* ============================================================ BUTTONS */
+.btn-row { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-top: var(--space-lg); }
+
+.btn-filled {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--sys-primary);
+  color: var(--sys-on-primary);
+  border: none; border-radius: var(--radius-full);
+  padding: 10px 24px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px; font-weight: 500; letter-spacing: 0.1px;
+  cursor: pointer;
+  transition: box-shadow .15s, opacity .15s;
+  line-height: 20px;
+}
+.btn-filled:hover { box-shadow: var(--elevation-1); opacity: .92; }
+
+.btn-outlined {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: transparent;
+  color: var(--sys-primary);
+  border: 1px solid var(--sys-outline);
+  border-radius: var(--radius-full);
+  padding: 10px 24px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px; font-weight: 500; letter-spacing: 0.1px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  line-height: 20px;
+}
+.btn-outlined:hover { background: var(--sys-primary-container); border-color: var(--sys-primary); }
+
+.btn-text {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: transparent; color: var(--sys-primary);
+  border: none; border-radius: var(--radius-full);
+  padding: 10px 12px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: background .15s;
+}
+.btn-text:hover { background: var(--sys-primary-container); }
+.btn-filled .material-icons-outlined,
+.btn-outlined .material-icons-outlined,
+.btn-text .material-icons-outlined { font-size: 18px; }
+
+/* ============================================================ DIVIDER */
+.divider { height: 1px; background: var(--sys-outline-variant); margin: var(--space-lg) 0; }
+
+/* ============================================================ LOADING */
+.loading { text-align: center; padding: var(--space-3xl) var(--space-lg); color: var(--sys-on-surface-variant); }
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--sys-outline-variant);
+  border-top-color: var(--sys-primary);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  margin: 0 auto var(--space-md);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================================================ RESULTS */
+.results-card {
+  background: var(--sys-surface);
+  border: 1px solid var(--sys-outline-variant);
+  border-radius: var(--radius-3);
+  overflow: hidden;
+  box-shadow: var(--elevation-2);
+  margin-top: var(--space-xl);
+}
+.results-header {
+  padding: var(--space-lg);
+  background: var(--sys-primary);
+  color: var(--sys-on-primary);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-md);
+}
+.results-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px; font-weight: 600; line-height: 24px;
+}
+.results-subtitle { font-size: 13px; opacity: .85; margin-top: 2px; }
+.total-value {
+  font-family: 'Poppins', sans-serif;
+  font-size: 28px; font-weight: 700;
+  text-align: right;
+}
+.total-label { font-size: 11px; opacity: .8; text-align: right; text-transform: uppercase; letter-spacing: .5px; }
+
+/* SUMMARY CARDS */
+.summary-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+  gap: 1px; background: var(--sys-outline-variant);
+}
+.summary-cell {
+  background: var(--surface-1);
+  padding: var(--space-md) var(--space-lg);
+}
+.summary-cell .val {
+  font-family: 'Poppins', sans-serif;
+  font-size: 22px; font-weight: 700;
+  color: var(--sys-primary);
+}
+.summary-cell .lbl {
+  font-size: 12px; color: var(--sys-on-surface-variant);
+  margin-top: 2px; font-weight: 500;
+}
+
+/* TABLE */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+thead tr { background: var(--surface-2); }
+thead th {
+  padding: 10px 16px; text-align: left;
+  font-size: 11px; font-weight: 600;
+  color: var(--sys-on-surface-variant);
+  text-transform: uppercase; letter-spacing: .6px;
+  border-bottom: 1px solid var(--sys-outline-variant);
+  white-space: nowrap;
+}
+thead th:not(:first-child) { text-align: right; }
+tbody tr { border-bottom: 1px solid var(--sys-outline-variant); transition: background .1s; }
+tbody tr:hover { background: var(--surface-1); }
+tbody td { padding: 11px 16px; vertical-align: middle; }
+tbody td:not(:first-child) { text-align: right; }
+.seg-pill {
+  display: inline-flex; align-items: center;
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
+  padding: 2px 8px; border-radius: var(--radius-full);
+  margin-right: 6px;
+}
+.pill-ei { background: var(--sys-success-container); color: var(--sys-on-success-container); }
+.pill-ai { background: var(--sys-info-container); color: var(--sys-info); }
+.pill-af { background: var(--sys-secondary-container); color: var(--sys-on-secondary-container); }
+.pill-geral { background: var(--sys-primary-container); color: var(--sys-on-primary-container); }
+
+.subtotal-row td { background: var(--surface-2); font-weight: 600; color: var(--sys-on-surface-variant); font-size: 13px; border-top: 1px solid var(--sys-outline-variant); }
+tfoot tr td {
+  padding: 14px 16px;
+  font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 16px;
+  background: var(--sys-primary-container);
+  color: var(--sys-on-primary-container);
+  border-top: 2px solid var(--sys-primary);
+}
+tfoot td:not(:first-child) { text-align: right; }
+
+.results-footer { padding: var(--space-md) var(--space-lg); background: var(--surface-1); display: flex; gap: var(--space-sm); flex-wrap: wrap; }
+
+/* INFO BANNER */
+.info-banner {
+  display: flex; align-items: center; gap: var(--space-sm);
+  background: var(--sys-info-container);
+  color: var(--sys-info);
+  border-radius: var(--radius-4);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 13px; font-weight: 500;
+  margin-top: var(--space-md);
+}
+.info-banner .material-icons-outlined { font-size: 18px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<header class="app-bar">
+  <img src="data:image/png;base64,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" alt="Nexis Educacional" style="height:42px;width:auto;object-fit:contain;">
+  <div>
+    <span class="app-bar-title">Simulador Nexis</span>
+  </div>
+</header>
+
+<div class="page">
+  <div class="stepper" id="stepper">
+    <div class="step-item"><div class="step-circle active" id="sc1">1</div><div class="step-label active" id="sl1">Rede</div></div>
+    <div class="step-line" id="line1"></div>
+    <div class="step-item"><div class="step-circle" id="sc2">2</div><div class="step-label" id="sl2">Segmentos</div></div>
+    <div class="step-line" id="line2"></div>
+    <div class="step-item"><div class="step-circle" id="sc3">3</div><div class="step-label" id="sl3">Opcionais</div></div>
+    <div class="step-line" id="line3"></div>
+    <div class="step-item"><div class="step-circle" id="sc4">4</div><div class="step-label" id="sl4">Preços</div></div>
+    <div class="step-line" id="line4"></div>
+    <div class="step-item"><div class="step-circle" id="sc5">5</div><div class="step-label" id="sl5">Resultado</div></div>
+  </div>
+
+  <div class="card active" id="step1">
+    <div class="card-header" onclick="toggleCard(1)">
+      <div class="card-header-icon"><span class="material-icons-outlined">apartment</span></div>
+      <div class="card-title">Selecionar Rede de Escolas</div>
+      <div class="card-summary" id="sum1"></div>
+    </div>
+    <div class="card-body">
+      <label class="form-label">Tipo de rede</label>
+      <div class="chip-group">
+        <div class="chip" id="chip-estado" onclick="selectRede('estado')"><span class="material-icons-outlined">account_balance</span> Estado</div>
+        <div class="chip" id="chip-municipio" onclick="selectRede('municipio')"><span class="material-icons-outlined">location_city</span> Município</div>
+      </div>
+      <div id="row-uf" style="display:none">
+        <label class="form-label">Estado</label>
+        <select class="text-field" id="sel-uf" onchange="onUFChange()"><option value="">Selecione o estado...</option></select>
+      </div>
+      <div id="row-mun" style="display:none">
+        <label class="form-label">Município</label>
+        <select class="text-field" id="sel-mun" onchange="onMunChange()"><option value="">Selecione o município...</option></select>
+      </div>
+      <div id="info1" style="display:none" class="info-banner"><span class="material-icons-outlined">info</span><span id="info1-text"></span></div>
+      <div class="btn-row">
+        <button class="btn-filled" onclick="ir2()">Próximo <span class="material-icons-outlined">arrow_forward</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="step2">
+    <div class="card-header" onclick="toggleCard(2)">
+      <div class="card-header-icon"><span class="material-icons-outlined">school</span></div>
+      <div class="card-title">Selecionar Segmentos</div>
+      <div class="card-summary" id="sum2"></div>
+    </div>
+    <div class="card-body">
+      <div class="seg-list">
+        <div class="seg-card" id="seg-ei" onclick="toggleSeg('ei')">
+          <div class="seg-card-check" id="chk-ei"></div>
+          <span class="material-icons-outlined seg-card-icon">child_care</span>
+          <div class="seg-card-text"><div class="seg-card-label">Educação Infantil</div><div class="seg-card-desc">Grupos G4 e G5 da pré-escola</div></div>
+        </div>
+        <div class="seg-card" id="seg-ai" onclick="toggleSeg('ai')">
+          <div class="seg-card-check" id="chk-ai"></div>
+          <span class="material-icons-outlined seg-card-icon">menu_book</span>
+          <div class="seg-card-text"><div class="seg-card-label">Ensino Fundamental — Anos Iniciais</div><div class="seg-card-desc">1º ao 5º ano do Ensino Fundamental</div></div>
+        </div>
+        <div class="seg-card" id="seg-af" onclick="toggleSeg('af')">
+          <div class="seg-card-check" id="chk-af"></div>
+          <span class="material-icons-outlined seg-card-icon">science</span>
+          <div class="seg-card-text"><div class="seg-card-label">Ensino Fundamental — Anos Finais</div><div class="seg-card-desc">6º ao 9º ano do Ensino Fundamental</div></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-outlined" onclick="voltar(1)"><span class="material-icons-outlined">arrow_back</span> Voltar</button>
+        <button class="btn-filled" onclick="ir3()">Próximo <span class="material-icons-outlined">arrow_forward</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="step3">
+    <div class="card-header" onclick="toggleCard(3)">
+      <div class="card-header-icon"><span class="material-icons-outlined">add_circle</span></div>
+      <div class="card-title">Itens Opcionais</div>
+      <div class="card-summary" id="sum3"></div>
+    </div>
+    <div class="card-body" id="body3">
+      <p style="color:var(--sys-on-surface-variant);font-size:14px;padding-top:var(--space-md)">Selecione os segmentos no passo anterior.</p>
+    </div>
+  </div>
+
+  <div class="card" id="step4">
+    <div class="card-header" onclick="toggleCard(4)">
+      <div class="card-header-icon"><span class="material-icons-outlined">payments</span></div>
+      <div class="card-title">Inserir Preços</div>
+      <div class="card-summary" id="sum4"></div>
+    </div>
+    <div class="card-body" id="body4">
+      <p style="color:var(--sys-on-surface-variant);font-size:14px;padding-top:var(--space-md)">Configure os passos anteriores primeiro.</p>
+    </div>
+  </div>
+
+  <div id="results" style="display:none"></div>
+</div>
+
+<script>
+
+const S = {
+  rede:null, uf:null, uf_nome:null, mun_cod:null, mun_nome:null,
+  segs:{ei:false,ai:false,af:false},
+  opts:{lapbook_ei:true,livro_ai:false,fll_ai:false,livro_af:false,fll_af:false}, // lapbook_ei sempre true (obrigatório)
+  prices:{}
+};
+let GEO={};
+
+fetch('data/geo.json').then(r=>r.json()).then(d=>{GEO=d;fillUF();}).catch(e=>console.error(e));
+
+function fillUF(){
+  const sel=document.getElementById('sel-uf');
+  Object.entries(GEO).sort((a,b)=>a[1].nome.localeCompare(b[1].nome)).forEach(([k,v])=>{
+    const o=document.createElement('option'); o.value=k; o.textContent=v.nome+' ('+k+')'; sel.appendChild(o);
+  });
+}
+
+function selectRede(tipo){
+  S.rede=tipo;
+  document.getElementById('chip-estado').classList.toggle('selected',tipo==='estado');
+  document.getElementById('chip-municipio').classList.toggle('selected',tipo==='municipio');
+  document.getElementById('row-uf').style.display='block';
+  document.getElementById('row-mun').style.display=tipo==='municipio'?'block':'none';
+  document.getElementById('sel-uf').value=''; S.uf=null; S.mun_cod=null;
+  document.getElementById('sel-mun').innerHTML='<option value="">Selecione o município...</option>';
+  document.getElementById('info1').style.display='none';
+}
+
+function onUFChange(){
+  const v=document.getElementById('sel-uf').value;
+  S.uf=v; S.uf_nome=GEO[v]?GEO[v].nome:'';
+  if(!v) return;
+  if(S.rede==='municipio'){
+    const ms=document.getElementById('sel-mun');
+    ms.innerHTML='<option value="">Selecione o município...</option>';
+    GEO[v].municipios.sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(function(m){
+      const o=document.createElement('option'); o.value=m.cod; o.textContent=m.nome; ms.appendChild(o);
+    });
+  }
+}
+
+function onMunChange(){
+  const sel=document.getElementById('sel-mun');
+  S.mun_cod=parseInt(sel.value)||null;
+  S.mun_nome=sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].textContent:'';
+}
+
+function toggleSeg(s){
+  S.segs[s]=!S.segs[s];
+  document.getElementById('seg-'+s).classList.toggle('selected',S.segs[s]);
+  document.getElementById('chk-'+s).textContent=S.segs[s]?'✓':'';
+}
+
+function toggleOpt(key){
+  S.opts[key]=!S.opts[key];
+  const b=document.getElementById('opt-'+key);
+  const c=document.getElementById('ochk-'+key);
+  if(b) b.classList.toggle('selected',S.opts[key]);
+  if(c) c.textContent=S.opts[key]?'✓':'';
+}
+
+function updateStepper(active){
+  for(var i=1;i<=5;i++){
+    var sc=document.getElementById('sc'+i);
+    var sl=document.getElementById('sl'+i);
+    var line=document.getElementById('line'+i);
+    sc.className='step-circle'+(i<active?' done':i===active?' active':'');
+    sl.className='step-label'+(i<active?' done':i===active?' active':'');
+    if(line) line.className='step-line'+(i<active?' done':'');
+  }
+}
+
+function activateCard(n){
+  document.querySelectorAll('.card').forEach(function(c){c.classList.remove('active');});
+  var el=document.getElementById('step'+n);
+  if(el) el.classList.add('active');
+  updateStepper(n);
+  setTimeout(function(){var e=document.getElementById('step'+n);if(e)e.scrollIntoView({behavior:'smooth',block:'start'});},100);
+}
+function markDone(n){ var el=document.getElementById('step'+n); if(el)el.classList.add('done'); }
+function toggleCard(n){
+  var c=document.getElementById('step'+n);
+  if(c.classList.contains('active')){c.classList.remove('active');}
+  else if(c.classList.contains('done')){activateCard(n);}
+}
+function voltar(n){ activateCard(n); }
+
+function ir2(){
+  if(!S.rede){alert('Selecione o tipo de rede.');return;}
+  if(!S.uf){alert('Selecione o estado.');return;}
+  if(S.rede==='municipio'&&!S.mun_cod){alert('Selecione o município.');return;}
+  document.getElementById('sum1').textContent=S.rede==='estado'?(S.uf_nome+' (Estadual)'):(S.mun_nome+' (Municipal)');
+  markDone(1); activateCard(2);
+}
+
+function ir3(){
+  if(!S.segs.ei&&!S.segs.ai&&!S.segs.af){alert('Selecione pelo menos um segmento.');return;}
+  var labs=[]; if(S.segs.ei)labs.push('EI'); if(S.segs.ai)labs.push('Fund. AI'); if(S.segs.af)labs.push('Fund. AF');
+  document.getElementById('sum2').textContent=labs.join(' · ');
+  buildStep3(); markDone(2); activateCard(3);
+}
+
+function ir4(){
+  var opts=[]; if(S.opts.lapbook_ei)opts.push('Lapbook EI'); if(S.opts.livro_ai)opts.push('Livros AI (1º–5º)'); if(S.opts.fll_ai)opts.push('FLL AI'); if(S.opts.livro_af)opts.push('Livros AF'); if(S.opts.fll_af)opts.push('FLL AF');
+  document.getElementById('sum3').textContent=opts.length?opts.join(' · '):'Nenhum opcional';
+  buildStep4(); markDone(3); activateCard(4);
+}
+
+function optItem(key,label,icon){
+  var sel=S.opts[key]?'selected':'';
+  var chk=S.opts[key]?'✓':'';
+  return '<div class="opt-item '+sel+'" id="opt-'+key+'" data-key="'+key+'">'+
+    '<div class="opt-check" id="ochk-'+key+'">'+chk+'</div>'+
+    '<span class="opt-label">'+label+'</span></div>';
+}
+
+function buildStep3(){
+  var h='';
+  if(S.segs.ei){
+    h+='<div class="opt-section"><div class="opt-section-title"><span class="material-icons-outlined" style="font-size:16px">child_care</span>Educação Infantil</div>';
+    h+='<div style="font-size:12px;color:var(--sys-on-surface-variant);padding:4px 0 8px">Lapbook G4/G5 é obrigatório para este segmento.</div>';
+    h+='</div>';
+  }
+  if(S.segs.ai){
+    h+='<div class="opt-section"><div class="opt-section-title"><span class="material-icons-outlined" style="font-size:16px">menu_book</span>Anos Iniciais</div>';
+    h+=optItem('fll_ai','FIRST LEGO League — Anos Iniciais');
+    h+=optItem('livro_ai','Livros para 1º ao 5º Ano');
+    h+='</div>';
+  }
+  if(S.segs.af){
+    h+='<div class="opt-section"><div class="opt-section-title"><span class="material-icons-outlined" style="font-size:16px">science</span>Anos Finais</div>';
+    h+=optItem('fll_af','FIRST LEGO League — Anos Finais');
+    h+=optItem('livro_af','Livros para 6º ao 9º Ano');
+    h+='</div>';
+  }
+  h+='<div class="btn-row">';
+  h+='<button class="btn-outlined" onclick="voltar(2)"><span class="material-icons-outlined">arrow_back</span> Voltar</button>';
+  h+='<button class="btn-filled" onclick="ir4()">Próximo <span class="material-icons-outlined">arrow_forward</span></button>';
+  h+='</div>';
+  document.getElementById('body3').innerHTML=h;
+  document.querySelectorAll('#body3 .opt-item').forEach(function(el){
+    el.addEventListener('click',function(){toggleOpt(this.getAttribute('data-key'));});
+  });
+}
+
+var DEFAULT_PRICES = {
+  nexis:9.40, // LICENÇA NEXIS POR ALUNO/ANO
+  formacao:623.75,
+  explorador:359.00, // 9203595 Exploradores de Máquinas
+  lego_duplo:610.00, // 9203677 - LEGO CX DE PEÇAS DELUXE - 10914
+  lapbook_ei:340.00, // LAPBOOK G4 E G5
+  mais_mat:253.00, // 9202605 - +MATEMÁTICA 1-2-CONJ. PRINC, (NAC) 45210
+  comp_ia8:6765.00, // 9203546 - LE CS& IA 8+ 45521
+  livro_ai:340.00, // LIVRO 1o AO 5o ANO
+  fll_tapete_ai:4130.00, // 9203645 - FLL 8+ 11+ 26.27 BIOGLOW - 45834
+  fll_motor_ai:755.00, // 9203655 - 45650 - LE SINGLE MOTOR SUB FLL
+  fll_ctrl_ai:447.00, // 9203656 - 45652 - LE CONTROLLER SUB FLL
+  fll_cartao_ai:349.00, // 9203666 - 45657 - LE CONNECTION CARDS PACK SUB FLL
+  microbit_ai:345.00, // 111767192 : PLACA BBC MICROBIT V2.2
+  multicharger_ai:2030.00, // 9203415 - LE MULTI-CHARGER 8 USB C - 45624
+  cabo_multicharger_ai:49.00, // 11234529 - CABO DE FORCA 2P+T 10 A C5 1.2M
+  comp_ia11:8451.00, // 9203547 - LE CS & IA 11+ 45522
+  livro_af:340.00, // LIVRO 6o AO 9o ANO
+  fll_tapete_af:4130.00, // 9203645 - FLL 8+ 11+ 26.27 BIOGLOW - 45834
+  microbit_af:345.00, // 111767192 : PLACA BBC MICROBIT V2.2
+  multicharger_af:2030.00, // 9203415 - LE MULTI-CHARGER 8 USB C - 45624
+  cabo_multicharger_af:49.00 // 11234529 - CABO DE FORCA 2P+T 10 A C5 1.2M
+};
+
+function pf(id,lbl){
+  var val = S.prices[id] !== undefined ? S.prices[id] : (DEFAULT_PRICES[id] || '');
+  return '<div class="price-field"><label class="form-label">'+lbl+'</label>'
+    +'<div class="input-wrap"><span class="prefix">R$</span>'
+    +'<input type="number" class="text-field" id="p-'+id+'" placeholder="0,00" min="0" step="0.01" value="'+val+'" style="padding-left:32px">'
+    +'</div></div>';
+}
+
+function buildStep4(){
+  var h='<div class="price-section"><div class="price-section-tag"><span class="material-icons-outlined" style="font-size:14px">settings</span>Itens Gerais</div>';
+  h+='<div class="grid2">'+pf('nexis','Licença Nexis por aluno/ano')+pf('formacao','Valor da hora de formação (24h/seg./escola)')+'</div></div>'; // LICENÇA NEXIS POR ALUNO/ANO
+  if(S.segs.ei){
+    h+='<div class="price-section"><div class="price-section-tag"><span class="material-icons-outlined" style="font-size:14px">child_care</span>Educação Infantil</div>';
+    h+='<div class="grid2">'+pf('explorador','9203595 Exploradores de Máquinas (kit)')+pf('lego_duplo','9203677 - LEGO CX DE PEÇAS DELUXE - 10914 (kit)')+'</div>';
+    h+=pf('lapbook_ei','Lapbook G4/G5 (por aluno)'); // LAPBOOK G4 E G5 — obrigatório
+    h+='</div>';
+  }
+  if(S.segs.ai){
+    h+='<div class="price-section"><div class="price-section-tag"><span class="material-icons-outlined" style="font-size:14px">menu_book</span>Anos Iniciais</div>';
+    h+='<div class="grid2">'+pf('mais_mat','9202605 - +MATEMÁTICA 1-2-CONJ. PRINC, (NAC) 45210 (kit)')+pf('comp_ia8','9203546 - LE CS& IA 8+ 45521 (kit)')+'</div>';
+    if(S.opts.livro_ai) h+=pf('livro_ai','Livro 1º ao 5º Ano (por aluno)'); // LIVRO 1o AO 5o ANO
+    if(S.opts.fll_ai){
+      h+='<div class="grid2">'+pf('fll_tapete_ai','9203645 - FLL 8+ 11+ 26.27 BIOGLOW - 45834')+pf('fll_motor_ai','9203655 - 45650 - LE SINGLE MOTOR SUB FLL')+pf('fll_ctrl_ai','9203656 - 45652 - LE CONTROLLER SUB FLL')+pf('fll_cartao_ai','9203666 - 45657 - LE CONNECTION CARDS PACK SUB FLL')+'</div>';
+    }
+    h+='<div class="divider"></div>';
+    h+='<div style="font-size:12px;font-weight:600;color:var(--sys-on-surface-variant);text-transform:uppercase;letter-spacing:.6px;margin-bottom:var(--space-sm)">Itens Obrigatórios — Anos Iniciais</div>';
+    h+='<div class="grid2">'+pf('microbit_ai','111767192 : PLACA BBC MICROBIT V2.2 (AI)')+pf('multicharger_ai','9203415 - LE MULTI-CHARGER 8 USB C - 45624 (AI)')+pf('cabo_multicharger_ai','11234529 - CABO DE FORCA 2P+T 10 A C5 1.2M (AI)')+'</div></div>';
+  }
+  if(S.segs.af){
+    h+='<div class="price-section"><div class="price-section-tag"><span class="material-icons-outlined" style="font-size:14px">science</span>Anos Finais</div>';
+    h+=pf('comp_ia11','9203547 - LE CS & IA 11+ 45522 (kit)');
+    if(S.opts.livro_af) h+=pf('livro_af','Livro 6º ao 9º Ano (por aluno)'); // LIVRO 6o AO 9o ANO
+    if(S.opts.fll_af) h+=pf('fll_tapete_af','9203645 - FLL 8+ 11+ 26.27 BIOGLOW - 45834 (por laboratório)');
+    h+='<div class="divider"></div>';
+    h+='<div style="font-size:12px;font-weight:600;color:var(--sys-on-surface-variant);text-transform:uppercase;letter-spacing:.6px;margin-bottom:var(--space-sm)">Itens Obrigatórios — Anos Finais</div>';
+    h+='<div class="grid2">'+pf('microbit_af','111767192 : PLACA BBC MICROBIT V2.2 (AF)')+pf('multicharger_af','9203415 - LE MULTI-CHARGER 8 USB C - 45624 (AF)')+pf('cabo_multicharger_af','11234529 - CABO DE FORCA 2P+T 10 A C5 1.2M (AF)')+'</div></div>';
+  }
+  h+='<div class="btn-row">';
+  h+='<button class="btn-outlined" onclick="voltar(3)"><span class="material-icons-outlined">arrow_back</span> Voltar</button>';
+  h+='<button class="btn-filled" onclick="calcular()"><span class="material-icons-outlined">bar_chart</span> Calcular</button>';
+  h+='</div>';
+  document.getElementById('body4').innerHTML=h;
+}
+
+function fmt(n){return(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtR(n){return 'R$ '+fmt(n);}
+function fmtQ(n){return Math.round(n||0).toLocaleString('pt-BR');}
+
+function addAgg(agg,prod,qtd,unit,cat){
+  if(!agg[prod]) agg[prod]={qtd:0,unit:unit,cat:cat};
+  agg[prod].qtd+=qtd;
+}
+
+function buildDetalheHTML(){
+  var det=window._det;
+  if(!det) return '';
+  var linhas=[
+    ['Lapbook — G4 e G5 (Educação Infantil)',det.lapbook_g4g5],
+    ['Livros — 1º Ano',det.l1],
+    ['Livros — 2º Ano',det.l2],
+    ['Livros — 3º Ano',det.l3],
+    ['Livros — 4º Ano',det.l4],
+    ['Livros — 5º Ano',det.l5],
+    ['Livros — 2º ao 5º Ano (base antiga)',det.l2a5_leg],
+    ['Livros — 6º Ano',det.l6],
+    ['Livros — 7º Ano',det.l7],
+    ['Livros — 8º Ano',det.l8],
+    ['Livros — 9º Ano',det.l9],
+    ['Livros — 6º ao 9º Ano (base antiga)',det.l6a9_leg]
+  ].filter(function(l){return l[1]>0;});
+  if(!linhas.length) return '';
+  var totalGeralDet=linhas.reduce(function(s,l){return s+l[1];},0);
+  var h='<div style="margin-top:var(--space-lg)">'
+    +'<div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--sys-on-surface-variant);margin-bottom:var(--space-sm)">Quantitativos detalhados — Lapbooks e Livros</div>'
+    +'<div class="table-wrap"><table>'
+    +'<thead><tr><th>Material</th><th style="text-align:right">Quantidade (alunos)</th></tr></thead><tbody>';
+  linhas.forEach(function(l){
+    h+='<tr><td>'+l[0]+'</td><td style="text-align:right">'+fmtQ(l[1])+'</td></tr>';
+  });
+  h+='</tbody><tfoot><tr><td>Total de materiais paradidáticos</td><td style="text-align:right">'+fmtQ(totalGeralDet)+'</td></tr></tfoot></table></div>'
+    +'<div style="font-size:11px;color:var(--sys-on-surface-variant);margin-top:4px">Obs.: o Censo Escolar (formato escola) informa a pré-escola apenas de forma agregada; por isso o Lapbook é apresentado como G4+G5, sem separação por grupo.</div>'
+    +'</div>';
+  return h;
+}
+
+function buildResultsHTML(agg, totalEscolas, totalAlunos, netLabel){
+  var catOrder={EI:0,AI:1,AF:2,GERAL:3};
+  var catNames={EI:'Educação Infantil',AI:'Anos Iniciais',AF:'Anos Finais',GERAL:'Itens Gerais'};
+  var pillClass={EI:'pill-ei',AI:'pill-ai',AF:'pill-af',GERAL:'pill-geral'};
+  var rows=Object.entries(agg).sort(function(a,b){return (catOrder[a[1].cat]||9)-(catOrder[b[1].cat]||9);});
+  var grand=0,tbody='',lastCat=null,catTot=0;
+  rows.forEach(function(entry){
+    var prod=entry[0],d=entry[1];
+    var tot=d.qtd*d.unit; grand+=tot;
+    if(d.cat!==lastCat){
+      if(lastCat!==null) tbody+='<tr class="subtotal-row"><td colspan="2" style="text-align:right">Subtotal — '+catNames[lastCat]+'</td><td></td><td>R$ '+fmt(catTot)+'</td></tr>';
+      lastCat=d.cat; catTot=0;
+    }
+    catTot+=tot;
+    tbody+='<tr><td><span class="seg-pill '+pillClass[d.cat]+'">'+d.cat+'</span>'+prod+'</td><td>'+d.qtd.toLocaleString('pt-BR')+'</td><td>'+(d.unit>0?'R$ '+fmt(d.unit):'—')+'</td><td>'+(d.unit>0?'R$ '+fmt(tot):'—')+'</td></tr>';
+  });
+  if(lastCat) tbody+='<tr class="subtotal-row"><td colspan="2" style="text-align:right">Subtotal — '+catNames[lastCat]+'</td><td></td><td>R$ '+fmt(catTot)+'</td></tr>';
+
+  return '<div class="results-card">'
+    +'<div class="results-header"><div>'
+    +'<div class="results-title">Resultado da Simulação</div>'
+    +'<div class="results-subtitle">'+netLabel+'</div>'
+    +'</div><div>'
+    +'<div class="total-label">Valor global do projeto</div>'
+    +'<div class="total-value">R$ '+fmt(grand)+'</div>'
+    +'</div></div>'
+    +'<div class="summary-grid">'
+    +'<div class="summary-cell"><div class="val">'+totalEscolas.toLocaleString('pt-BR')+'</div><div class="lbl">Escolas atendidas</div></div>'
+    +'<div class="summary-cell"><div class="val">'+totalAlunos.toLocaleString('pt-BR')+'</div><div class="lbl">Alunos (total segmentos)</div></div>'
+    +'<div class="summary-cell"><div class="val">'+(grand>0&&totalEscolas>0?'R$ '+fmt(grand/totalEscolas):'—')+'</div><div class="lbl">Valor médio por escola</div></div>'
+    +'<div class="summary-cell"><div class="val">'+(grand>0&&totalAlunos>0?'R$ '+fmt((grand/totalAlunos)/12):'—')+'</div><div class="lbl">Valor médio por aluno/mês</div></div>'
+    +'</div>'
+    +'<div class="table-wrap"><table>'
+    +'<thead><tr><th>Produto</th><th style="text-align:right">Qtd. Total</th><th style="text-align:right">Valor Unit.</th><th style="text-align:right">Valor Total</th></tr></thead>'
+    +'<tbody>'+tbody+'</tbody>'
+    +'<tfoot><tr><td colspan="3">Valor Global do Projeto</td><td style="text-align:right">R$ '+fmt(grand)+'</td></tr></tfoot>'
+    +'</table></div>'
+    +buildDetalheHTML()
+    +'<div class="results-footer">'
+    +'<button class="btn-filled" onclick="downloadCSV()"><span class="material-icons-outlined">download</span> Baixar detalhamento (.csv)</button>'
+    +'<button class="btn-outlined" onclick="location.reload()"><span class="material-icons-outlined">refresh</span> Nova simulação</button>'
+    +'<button class="btn-outlined" onclick="document.getElementById(\'upload-csv-input\').click()"><span class="material-icons-outlined">upload_file</span> Upar planilha editada</button>'
+    +'<input type="file" id="upload-csv-input" accept=".csv" style="display:none" onchange="processarCSVEditado(this)">'
+    +'<button class="btn-filled" style="background:linear-gradient(135deg,#b971e0,#7c3aad)" onclick="baixarProposta(event)"><span class="material-icons-outlined">description</span> Baixar proposta</button>'
+    +'</div></div>';
+}
+
+async function calcular(){
+  var keys=['nexis','formacao','explorador','lego_duplo','lapbook_ei','mais_mat','comp_ia8','livro_ai','fll_tapete_ai','fll_motor_ai','fll_ctrl_ai','fll_cartao_ai','microbit_ai','multicharger_ai','cabo_multicharger_ai','comp_ia11','livro_af','fll_tapete_af','microbit_af','multicharger_af','cabo_multicharger_af'];
+  keys.forEach(function(k){ var el=document.getElementById('p-'+k); if(el) S.prices[k]=parseFloat(el.value)||0; });
+  markDone(4); updateStepper(5);
+  var area=document.getElementById('results');
+  area.style.display='block';
+  area.innerHTML='<div class="results-card"><div class="loading"><div class="spinner"></div><div>Carregando dados das escolas...</div></div></div>';
+  setTimeout(function(){area.scrollIntoView({behavior:'smooth'});},100);
+
+  var escolas;
+  try{ var r=await fetch('data/'+S.uf+'.json'); escolas=await r.json(); }
+  catch(e){ area.innerHTML='<div class="info-banner" style="margin-top:var(--space-lg)"><span class="material-icons-outlined">error</span>Erro ao carregar dados do estado '+S.uf+'.</div>'; return; }
+
+  var filtradas=S.rede==='estado'?escolas.filter(function(e){return e.dep===2;}):escolas.filter(function(e){return e.dep===3&&e.mun_cod===S.mun_cod;});
+  var agg={}; var totalEscolas=0,totalAlunos=0; var csvRows=[];
+  var det={lapbook_g4g5:0,l1:0,l2:0,l3:0,l4:0,l5:0,l6:0,l7:0,l8:0,l9:0,l2a5_leg:0,l6a9_leg:0};
+
+  filtradas.forEach(function(e){
+    var segsEsc=[];
+    var row={Escola:e.nome,Municipio:e.mun,UF:S.uf,Dependencia:S.rede==='estado'?'Estadual':'Municipal',Formacao_Total_horas:0,
+      EI_Laboratorios:0,EI_Alunos:0,EI_Maior_Turma:0,EI_Exploradores_Maquinas_kits:0,EI_LEGO_Duplo_kits:0,EI_Lapbook_G4G5_alunos:0,EI_Licenca_Nexis_alunos:0,
+      AI_Laboratorios:0,AI_Alunos:0,AI_Alunos_1ano:0,AI_Alunos_2ao5ano:0,AI_Maior_Turma:0,AI_Mais_Matematica_kits:0,AI_Computacao_IA8_kits:0,AI_Livro_1ano_alunos:0,AI_Livro_2ano_alunos:0,AI_Livro_3ano_alunos:0,AI_Livro_4ano_alunos:0,AI_Livro_5ano_alunos:0,AI_FLL_Tapete:0,AI_FLL_Motor_Simples:0,AI_FLL_Controlador:0,AI_FLL_Cartao_Conexao:0,AI_Licenca_Nexis_alunos:0,AI_Microbit_unid:0,AI_Multicharger_unid:0,AI_Cabo_Multicharger_unid:0,
+      AF_Laboratorios:0,AF_Alunos:0,AF_Maior_Turma:0,AF_Computacao_IA11_kits:0,AF_Livro_6ano_alunos:0,AF_Livro_7ano_alunos:0,AF_Livro_8ano_alunos:0,AF_Livro_9ano_alunos:0,AF_FLL_Tapete:0,AF_Licenca_Nexis_alunos:0,AF_Microbit_unid:0,AF_Multicharger_unid:0,AF_Cabo_Multicharger_unid:0};
+
+    if(S.segs.ei&&e.ei_lab>0&&e.ei_mat>0){
+      var kpl=Math.ceil(e.ei_mt/4)||1;
+      addAgg(agg,'Exploradores de Máquinas',kpl*e.ei_lab,S.prices.explorador,'EI');
+      addAgg(agg,'LEGO Duplo Deluxe 10914',kpl*e.ei_lab,S.prices.lego_duplo,'EI');
+      addAgg(agg,'Lapbook G4/G5',e.ei_mat,S.prices.lapbook_ei,'EI'); det.lapbook_g4g5+=e.ei_mat; // obrigatório
+      addAgg(agg,'Licença Nexis — EI',e.ei_mat,S.prices.nexis,'GERAL');
+      totalAlunos+=e.ei_mat; segsEsc.push('EI');
+      row.EI_Laboratorios=e.ei_lab; row.EI_Alunos=e.ei_mat; row.EI_Maior_Turma=e.ei_mt;
+      row.EI_Exploradores_Maquinas_kits=kpl*e.ei_lab; row.EI_LEGO_Duplo_kits=kpl*e.ei_lab;
+      row.EI_Lapbook_G4G5_alunos=e.ei_mat; row.EI_Licenca_Nexis_alunos=e.ei_mat; // lapbook_ei obrigatório
+    }
+    if(S.segs.ai&&e.ai_lab>0&&e.ai_mat>0){
+      var kplAI=Math.ceil(e.ai_mt/4)||1;
+      var compIA8qtd=kplAI*e.ai_lab;
+      var microbit_ai=Math.ceil((e.ai_mt3a5||e.ai_mt)/2)*e.ai_lab;
+      var multicharger_ai=Math.ceil(compIA8qtd/4);
+      addAgg(agg,'Mais Matemática',kplAI*e.ai_lab,S.prices.mais_mat,'AI');
+      addAgg(agg,'Computação & IA 8+',compIA8qtd,S.prices.comp_ia8,'AI');
+      addAgg(agg,'Placa BBC micro:bit (AI)',microbit_ai,S.prices.microbit_ai,'AI');
+      addAgg(agg,'Multicharger (AI)',multicharger_ai,S.prices.multicharger_ai,'AI');
+      addAgg(agg,'Cabo Multicharger (AI)',multicharger_ai,S.prices.cabo_multicharger_ai,'AI');
+      var livrosAI=(e.ai_mat1||0)+(e.ai_mat2a5||0);
+      if(S.opts.livro_ai&&livrosAI>0){
+        addAgg(agg,'Livro 1º ao 5º Ano',livrosAI,S.prices.livro_ai,'AI');
+        det.l1+=(e.ai_mat1||0);
+        if(e.ai_mat2!==undefined){ det.l2+=(e.ai_mat2||0); det.l3+=(e.ai_mat3||0); det.l4+=(e.ai_mat4||0); det.l5+=(e.ai_mat5||0); }
+        else { det.l2a5_leg+=(e.ai_mat2a5||0); }
+      }
+      if(S.opts.fll_ai){
+        addAgg(agg,'FLL — Tapete (AI)',e.ai_lab,S.prices.fll_tapete_ai,'AI');
+        addAgg(agg,'FLL — Motor Simples (AI)',2*e.ai_lab,S.prices.fll_motor_ai,'AI');
+        addAgg(agg,'FLL — Controlador (AI)',2*e.ai_lab,S.prices.fll_ctrl_ai,'AI');
+        addAgg(agg,'FLL — Cartão de Conexão (AI)',2*e.ai_lab,S.prices.fll_cartao_ai,'AI');
+      }
+      addAgg(agg,'Licença Nexis — AI',e.ai_mat,S.prices.nexis,'GERAL');
+      totalAlunos+=e.ai_mat; segsEsc.push('AI');
+      row.AI_Laboratorios=e.ai_lab; row.AI_Alunos=e.ai_mat; row.AI_Alunos_1ano=e.ai_mat1; row.AI_Alunos_2ao5ano=e.ai_mat2a5; row.AI_Maior_Turma=e.ai_mt;
+      row.AI_Mais_Matematica_kits=kplAI*e.ai_lab; row.AI_Computacao_IA8_kits=kplAI*e.ai_lab;
+      row.AI_Livro_1ano_alunos=S.opts.livro_ai?(e.ai_mat1||0):0;
+      row.AI_Livro_2ano_alunos=S.opts.livro_ai?(e.ai_mat2||0):0; row.AI_Livro_3ano_alunos=S.opts.livro_ai?(e.ai_mat3||0):0;
+      row.AI_Livro_4ano_alunos=S.opts.livro_ai?(e.ai_mat4||0):0; row.AI_Livro_5ano_alunos=S.opts.livro_ai?(e.ai_mat5||0):0;
+      row.AI_FLL_Tapete=S.opts.fll_ai?e.ai_lab:0; row.AI_FLL_Motor_Simples=S.opts.fll_ai?2*e.ai_lab:0;
+      row.AI_FLL_Controlador=S.opts.fll_ai?2*e.ai_lab:0; row.AI_FLL_Cartao_Conexao=S.opts.fll_ai?2*e.ai_lab:0;
+      row.AI_Licenca_Nexis_alunos=e.ai_mat; row.AI_Microbit_unid=microbit_ai; row.AI_Multicharger_unid=multicharger_ai; row.AI_Cabo_Multicharger_unid=multicharger_ai;
+    }
+    if(S.segs.af&&e.af_lab>0&&e.af_mat>0){
+      var kplAF=Math.ceil(e.af_mt/4)||1;
+      var compIA11qtd=kplAF*e.af_lab;
+      var microbit_af=Math.ceil((e.af_mt6a9||e.af_mt)/2)*e.af_lab;
+      var multicharger_af=Math.ceil(compIA11qtd/2);
+      addAgg(agg,'Computação & IA 11+',compIA11qtd,S.prices.comp_ia11,'AF');
+      addAgg(agg,'Placa BBC micro:bit (AF)',microbit_af,S.prices.microbit_af,'AF');
+      addAgg(agg,'Multicharger (AF)',multicharger_af,S.prices.multicharger_af,'AF');
+      addAgg(agg,'Cabo Multicharger (AF)',multicharger_af,S.prices.cabo_multicharger_af,'AF');
+      if(S.opts.livro_af){
+        addAgg(agg,'Livro 6º ao 9º Ano',e.af_mat,S.prices.livro_af,'AF');
+        if(e.af_mat6!==undefined){ det.l6+=(e.af_mat6||0); det.l7+=(e.af_mat7||0); det.l8+=(e.af_mat8||0); det.l9+=(e.af_mat9||0); }
+        else { det.l6a9_leg+=e.af_mat; }
+      }
+      if(S.opts.fll_af) addAgg(agg,'FLL — Tapete (AF)',e.af_lab,S.prices.fll_tapete_af,'AF');
+      addAgg(agg,'Licença Nexis — AF',e.af_mat,S.prices.nexis,'GERAL');
+      totalAlunos+=e.af_mat; segsEsc.push('AF');
+      row.AF_Laboratorios=e.af_lab; row.AF_Alunos=e.af_mat; row.AF_Maior_Turma=e.af_mt;
+      row.AF_Computacao_IA11_kits=kplAF*e.af_lab;
+      row.AF_Livro_6ano_alunos=S.opts.livro_af?(e.af_mat6||0):0; row.AF_Livro_7ano_alunos=S.opts.livro_af?(e.af_mat7||0):0;
+      row.AF_Livro_8ano_alunos=S.opts.livro_af?(e.af_mat8||0):0; row.AF_Livro_9ano_alunos=S.opts.livro_af?(e.af_mat9||0):0;
+      row.AF_FLL_Tapete=S.opts.fll_af?e.af_lab:0; row.AF_Licenca_Nexis_alunos=e.af_mat;
+      row.AF_Microbit_unid=microbit_af; row.AF_Multicharger_unid=multicharger_af; row.AF_Cabo_Multicharger_unid=multicharger_af;
+    }
+    if(segsEsc.length>0){
+      var h=segsEsc.length*24; row.Formacao_Total_horas=h;
+      addAgg(agg,'Formação ('+h+'h/escola)',h,S.prices.formacao,'GERAL');
+      totalEscolas++; csvRows.push(row);
+    }
+  });
+
+  window._det=det;
+  var netLabel=S.rede==='estado'?('Rede Estadual — '+S.uf_nome):('Rede Municipal — '+S.mun_nome+' ('+S.uf+')');
+  area.innerHTML=buildResultsHTML(agg,totalEscolas,totalAlunos,netLabel);
+  window._csv=csvRows;
+  window._agg=agg;
+}
+
+function downloadCSV(){
+  if(!window._csv||!window._csv.length) return;
+  var keys=Object.keys(window._csv[0]);
+  var c=keys.join(';')+'\n';
+  window._csv.forEach(function(r){c+=keys.map(function(k){return r[k]!=null?r[k]:'';}).join(';')+'\n';});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+c],{type:'text/csv;charset=utf-8'}));
+  a.download='simulacao_'+S.uf+'_'+Date.now()+'.csv'; a.click();
+}
+
+function processarCSVEditado(input){
+  var file=input.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var text=e.target.result;
+    var lines=text.split('\n').filter(function(l){return l.trim();});
+    if(lines.length<2){alert('CSV vazio ou inválido.');return;}
+    var headers=lines[0].split(';').map(function(h){return h.trim().replace(/^\uFEFF/,'');});
+    var rows=lines.slice(1).map(function(line){
+      var vals=line.split(';');
+      var obj={};
+      headers.forEach(function(h,i){obj[h]=vals[i]?vals[i].trim():'0';});
+      return obj;
+    });
+    var newAgg={}; var newEscolas=0,newAlunos=0;
+    var det={lapbook_g4g5:0,l1:0,l2:0,l3:0,l4:0,l5:0,l6:0,l7:0,l8:0,l9:0,l2a5_leg:0,l6a9_leg:0};
+    var colMap={
+      EI_Exploradores_Maquinas_kits:{prod:'Exploradores de Máquinas',unit:S.prices.explorador,cat:'EI'},
+      EI_LEGO_Duplo_kits:{prod:'LEGO Duplo Deluxe 10914',unit:S.prices.lego_duplo,cat:'EI'},
+      EI_Lapbook_G4G5_alunos:{prod:'Lapbook G4/G5',unit:S.prices.lapbook_ei,cat:'EI'},
+      EI_Licenca_Nexis_alunos:{prod:'Licença Nexis — EI',unit:S.prices.nexis,cat:'GERAL'},
+      AI_Mais_Matematica_kits:{prod:'Mais Matemática',unit:S.prices.mais_mat,cat:'AI'},
+      AI_Computacao_IA8_kits:{prod:'Computação & IA 8+',unit:S.prices.comp_ia8,cat:'AI'},
+      AI_Livro_1ano_alunos:{prod:'Livro 1º ao 5º Ano',unit:S.prices.livro_ai,cat:'AI'},
+      AI_Livro_2ano_alunos:{prod:'Livro 1º ao 5º Ano',unit:S.prices.livro_ai,cat:'AI'},
+      AI_Livro_3ano_alunos:{prod:'Livro 1º ao 5º Ano',unit:S.prices.livro_ai,cat:'AI'},
+      AI_Livro_4ano_alunos:{prod:'Livro 1º ao 5º Ano',unit:S.prices.livro_ai,cat:'AI'},
+      AI_Livro_5ano_alunos:{prod:'Livro 1º ao 5º Ano',unit:S.prices.livro_ai,cat:'AI'},
+      AI_Lapbook_1ano_alunos:{prod:'Livro 1º ao 5º Ano',unit:S.prices.livro_ai,cat:'AI'},
+      AI_Livro_2ao5ano_alunos:{prod:'Livro 1º ao 5º Ano',unit:S.prices.livro_ai,cat:'AI'},
+      AI_FLL_Tapete:{prod:'FLL — Tapete (AI)',unit:S.prices.fll_tapete_ai,cat:'AI'},
+      AI_FLL_Motor_Simples:{prod:'FLL — Motor Simples (AI)',unit:S.prices.fll_motor_ai,cat:'AI'},
+      AI_FLL_Controlador:{prod:'FLL — Controlador (AI)',unit:S.prices.fll_ctrl_ai,cat:'AI'},
+      AI_FLL_Cartao_Conexao:{prod:'FLL — Cartão de Conexão (AI)',unit:S.prices.fll_cartao_ai,cat:'AI'},
+      AI_Microbit_unid:{prod:'Placa BBC micro:bit (AI)',unit:S.prices.microbit_ai,cat:'AI'},
+      AI_Multicharger_unid:{prod:'Multicharger (AI)',unit:S.prices.multicharger_ai,cat:'AI'},
+      AI_Cabo_Multicharger_unid:{prod:'Cabo Multicharger (AI)',unit:S.prices.cabo_multicharger_ai,cat:'AI'},
+      AI_Licenca_Nexis_alunos:{prod:'Licença Nexis — AI',unit:S.prices.nexis,cat:'GERAL'},
+      AF_Computacao_IA11_kits:{prod:'Computação & IA 11+',unit:S.prices.comp_ia11,cat:'AF'},
+      AF_Livro_6ano_alunos:{prod:'Livro 6º ao 9º Ano',unit:S.prices.livro_af,cat:'AF'},
+      AF_Livro_7ano_alunos:{prod:'Livro 6º ao 9º Ano',unit:S.prices.livro_af,cat:'AF'},
+      AF_Livro_8ano_alunos:{prod:'Livro 6º ao 9º Ano',unit:S.prices.livro_af,cat:'AF'},
+      AF_Livro_9ano_alunos:{prod:'Livro 6º ao 9º Ano',unit:S.prices.livro_af,cat:'AF'},
+      AF_Livro_6ao9ano_alunos:{prod:'Livro 6º ao 9º Ano',unit:S.prices.livro_af,cat:'AF'},
+      AF_FLL_Tapete:{prod:'FLL — Tapete (AF)',unit:S.prices.fll_tapete_af,cat:'AF'},
+      AF_Microbit_unid:{prod:'Placa BBC micro:bit (AF)',unit:S.prices.microbit_af,cat:'AF'},
+      AF_Multicharger_unid:{prod:'Multicharger (AF)',unit:S.prices.multicharger_af,cat:'AF'},
+      AF_Cabo_Multicharger_unid:{prod:'Cabo Multicharger (AF)',unit:S.prices.cabo_multicharger_af,cat:'AF'},
+      AF_Licenca_Nexis_alunos:{prod:'Licença Nexis — AF',unit:S.prices.nexis,cat:'GERAL'}
+    };
+    var seenEscolas=new Set();
+    rows.forEach(function(row){
+      if(!row.Escola) return;
+      if(!seenEscolas.has(row.Escola)){seenEscolas.add(row.Escola);newEscolas++;}
+      var hForm=parseInt(row.Formacao_Total_horas)||0;
+      if(hForm>0){
+        var key='Formação ('+hForm+'h/escola)';
+        if(!newAgg[key]) newAgg[key]={qtd:0,unit:S.prices.formacao,cat:'GERAL'};
+        newAgg[key].qtd+=hForm;
+      }
+      Object.entries(colMap).forEach(function(entry){
+        var col=entry[0],meta=entry[1];
+        var q=parseInt(row[col])||0;
+        if(q>0){
+          if(!newAgg[meta.prod]) newAgg[meta.prod]={qtd:0,unit:meta.unit,cat:meta.cat};
+          newAgg[meta.prod].qtd+=q;
+        }
+      });
+      newAlunos+=(parseInt(row.EI_Alunos)||0)+(parseInt(row.AI_Alunos)||0)+(parseInt(row.AF_Alunos)||0);
+      det.lapbook_g4g5+=parseInt(row.EI_Lapbook_G4G5_alunos)||0;
+      det.l1+=(parseInt(row.AI_Livro_1ano_alunos)||0)+(parseInt(row.AI_Lapbook_1ano_alunos)||0);
+      det.l2+=parseInt(row.AI_Livro_2ano_alunos)||0; det.l3+=parseInt(row.AI_Livro_3ano_alunos)||0;
+      det.l4+=parseInt(row.AI_Livro_4ano_alunos)||0; det.l5+=parseInt(row.AI_Livro_5ano_alunos)||0;
+      det.l2a5_leg+=parseInt(row.AI_Livro_2ao5ano_alunos)||0;
+      det.l6+=parseInt(row.AF_Livro_6ano_alunos)||0; det.l7+=parseInt(row.AF_Livro_7ano_alunos)||0;
+      det.l8+=parseInt(row.AF_Livro_8ano_alunos)||0; det.l9+=parseInt(row.AF_Livro_9ano_alunos)||0;
+      det.l6a9_leg+=parseInt(row.AF_Livro_6ao9ano_alunos)||0;
+    });
+    window._det=det;
+    window._csvData=rows; window._agg=newAgg;
+    var netLabel=(S.rede==='estado'?('Rede Estadual — '+S.uf_nome):('Rede Municipal — '+S.mun_nome+' ('+S.uf+')'))+'  [planilha editada]';
+    var area=document.getElementById('results');
+    area.innerHTML=buildResultsHTML(newAgg,newEscolas,newAlunos,netLabel);
+    window._agg=newAgg;
+    alert('Planilha carregada! '+rows.length+' linhas, '+newEscolas+' escolas.');
+  };
+  reader.readAsText(file,'UTF-8');
+  input.value='';
+}
+
+// ===== Gerador da Proposta V02/2026 =====
+// D = {rede:'estado'|'municipio', entidade, dia, mes,
+//      nexis:{qtd,unit}, horasForm, formUnit,
+//      p:{explorador:{qtd,unit}, lego_duplo, mais_mat, comp_ia8, comp_ia11,
+//         fll_tapete, fll_motor, fll_ctrl, fll_cartao,
+//         mc_ai, mc_af, cabo:{qtd,tot}, microbit:{qtd,tot}},
+//      det:{lapbook_g4g5,l1..l9,l2a5_leg,l6a9_leg},
+//      precos:{lapbook_ei,livro_ai,livro_af}}
+function gerarXmlProposta(xml, D, extenso){
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function fmtBR(n){return Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function fmtQ(n){return Math.round(n||0).toLocaleString('pt-BR');}
+  function replFirst(s,find,put){var i=s.indexOf(find);return i<0?s:s.slice(0,i)+put+s.slice(i+find.length);}
+  function stripHl(seg){return seg.split('<w:highlight w:val="yellow"/>').join('').split('<w:shd w:val="clear" w:color="auto" w:fill="FFFF00"/>').join('');}
+  function rowBounds(marker){var idx=xml.indexOf(marker);if(idx<0)return null;var s=xml.lastIndexOf('<w:tr ',idx);var e=xml.indexOf('</w:tr>',idx)+7;return{start:s,end:e};}
+  function stripHlPara(anchor){var from=0;while(true){var i=xml.indexOf(anchor,from);if(i<0)break;var ps=xml.lastIndexOf('<w:p ',i),pe=xml.indexOf('</w:p>',i)+6;var seg=stripHl(xml.slice(ps,pe));xml=xml.slice(0,ps)+seg+xml.slice(pe);from=ps+seg.length;}}
+  function setText(oldT,newT){var i=xml.indexOf(oldT);if(i<0)return false;xml=xml.slice(0,i)+newT+xml.slice(i+oldT.length);return true;}
+  function removeRow(marker){var b=rowBounds(marker);if(!b)return;xml=xml.slice(0,b.start)+xml.slice(b.end);}
+  function fillRow(marker,qtd,unit,total){
+    var b=rowBounds(marker);if(!b)return;
+    var seg=xml.slice(b.start,b.end);
+    var tot=(total!==undefined)?total:qtd*unit;
+    seg=replFirst(seg,'>XX<','>'+esc(fmtQ(qtd))+'<');
+    seg=replFirst(seg,'>02<','>'+esc(fmtQ(qtd))+'<');
+    seg=replFirst(seg,'>R$ XXXX,XX<','>'+esc('R$ '+fmtBR(unit))+'<');
+    seg=replFirst(seg,'>R$\u00a0XXX,XX<','>'+esc('R$ '+fmtBR(tot))+'<');
+    seg=replFirst(seg,'>R$ XXX,XX<','>'+esc('R$ '+fmtBR(tot))+'<');
+    seg=stripHl(seg);
+    xml=xml.slice(0,b.start)+seg+xml.slice(b.end);
+  }
+  function removeParaInSeg(seg,text){
+    var i=seg.indexOf(text);if(i<0)return seg;
+    var ps=seg.lastIndexOf('<w:p ',i),pe=seg.indexOf('</w:p>',i)+6;
+    return seg.slice(0,ps)+seg.slice(pe);
+  }
+  function removeSection(startTxt,endTxt){
+    var FICHA=xml.indexOf('FICHA TÉCNICA');
+    var s=xml.indexOf(startTxt,FICHA);if(s<0)return;
+    var e=xml.indexOf(endTxt,s+startTxt.length);if(e<0)return;
+    var ps=xml.lastIndexOf('<w:p ',s),pe=xml.lastIndexOf('<w:p ',e);
+    if(ps<0||pe<=ps)return;
+    xml=xml.slice(0,ps)+xml.slice(pe);
+  }
+
+  // ===== 0) Cabeçalho: datas e entidade =====
+  setText('<w:t>xx</w:t>','<w:t>'+D.dia+'</w:t>');                       // 1ª data: dia
+  setText('> xxxxxxx <','> '+D.mes+' <');                                 // 1ª data: mês
+  setText('>XX de XXXX <','>'+D.dia+' de '+D.mes+' <');                   // 2ª data
+  setText('PREFEITURA MUNICIPAL/GOVERNO DO ESTADO DE XXXXXXXXX',esc(D.entidade));
+  setText('PREFEITURA MUNICIPAL DE XXXXXXXXXXX',esc(D.entidade));
+  stripHlPara('Curitiba,'); stripHlPara('\u00a0Curitiba/PR, ');
+  stripHlPara(esc(D.entidade));
+
+  // ===== 1.1) Plataforma =====
+  var nexisTot=D.nexis.qtd*D.nexis.unit;
+  (function(){
+    var b=rowBounds(' xxxxx');if(!b)return;
+    var seg=xml.slice(b.start,b.end);
+    seg=replFirst(seg,'> xxxxx<','> '+esc(fmtQ(D.nexis.qtd))+'<');
+    seg=replFirst(seg,'>XX meses<','>12 meses<');
+    seg=replFirst(seg,'>R$ xxx,xx<','>'+esc('R$ '+fmtBR(D.nexis.unit))+'<');
+    seg=replFirst(seg,'>R$ xxxxx,xx<','>'+esc('R$ '+fmtBR(nexisTot))+'<');
+    seg=stripHl(seg);
+    xml=xml.slice(0,b.start)+seg+xml.slice(b.end);
+  })();
+  setText('>R$ xxxxx,xx<','>'+esc('R$ '+fmtBR(nexisTot))+'<');            // VALOR TOTAL 1.1
+  stripHlPara('R$ '+fmtBR(nexisTot));
+
+  // ===== 1.2) Produtos =====
+  removeRow('LICENÇA PLATAFORMA DIGITAL NEXIS'); // licença já orçada no tópico 1.1 (serviço)
+
+  var P=D.p, produtosTot=0;
+  function prod(marker,item,annexStart,annexEnd,forceTot){
+    var q=item?item.qtd:0;
+    if(q>0){
+      var tot=(forceTot!==undefined)?forceTot:q*item.unit;
+      var unit=(forceTot!==undefined)?(tot/q):item.unit;
+      fillRow(marker,q,unit,tot); produtosTot+=tot;
+    }else{
+      removeRow(marker);
+      if(annexStart) removeSection(annexStart,annexEnd);
+    }
+  }
+  prod('CONJUNTO EXPLORADORES DE MÁQUINAS',P.explorador,'CONJUNTO EXPLORADORES DE MÁQUINAS','CONJUNTO LEGO® DUPLO® DELUXE (10913)');
+  prod('10913 – CONJUNTO',P.lego_duplo,'CONJUNTO LEGO® DUPLO® DELUXE (10913)','CONJUNTO LEGO® EDUCATION MAIS MATEMÁTICA (45210)');
+  prod('45210 – CONJUNTO',P.mais_mat,'CONJUNTO LEGO® EDUCATION MAIS MATEMÁTICA (45210)','CONJUNTO LEGO® EDUCATION COMPUTAÇÃO &amp; IA 8+ (45521)');
+  prod('45521 – CONJUNTO',P.comp_ia8,'CONJUNTO LEGO® EDUCATION COMPUTAÇÃO &amp; IA 8+ (45521)','CONJUNTO LEGO® EDUCATION COMPUTAÇÃO &amp; IA 11+ (45522)');
+  prod('45522 – CONJUNTO',P.comp_ia11,'CONJUNTO LEGO® EDUCATION COMPUTAÇÃO &amp; IA 11+ (45522)','CONJUNTO FIRST® LEGO® LEAGUE FUTURE EDITION (45834)');
+
+  var temFll=P.fll_tapete.qtd>0;
+  if(temFll){
+    prod('45834 – CONJUNTO',P.fll_tapete);
+    prod('45650 – MOTOR',P.fll_motor);
+    prod('45652 - LEGO',P.fll_ctrl);
+    prod('45657 - PACOTE',P.fll_cartao);
+  }else{
+    removeRow('45834 – CONJUNTO'); removeRow('45650 – MOTOR');
+    removeRow('45652 - LEGO'); removeRow('45657 - PACOTE');
+    removeSection('CONJUNTO FIRST® LEGO® LEAGUE FUTURE EDITION (45834)','PLACA DE PROGRAMAÇÃO BBC MICRO:BIT');
+  }
+  prod('MULTI-CHARGER USB-C 8+',P.mc_ai);
+  prod('MULTI-CHARGER USB-C 11+',P.mc_af);
+  prod('CABO DE FORÇA 2P+T',P.cabo,null,null,P.cabo.tot);
+  prod('PLACA DE PROGRAMAÇÃO BBC MICRO:BIT',P.microbit,'PLACA DE PROGRAMAÇÃO BBC MICRO:BIT','MATERIAL PARADIDÁTICO',P.microbit.tot);
+
+  // ===== 1.2) Material paradidático (com detalhamento por ano) =====
+  var det=D.det, pr=D.precos;
+  var lapQ=det.lapbook_g4g5;
+  var livAIQ=det.l1+det.l2+det.l3+det.l4+det.l5+det.l2a5_leg;
+  var livAFQ=det.l6+det.l7+det.l8+det.l9+det.l6a9_leg;
+  var paraQ=lapQ+livAIQ+livAFQ;
+  var paraTot=lapQ*pr.lapbook_ei+livAIQ*pr.livro_ai+livAFQ*pr.livro_af;
+  if(paraQ>0){
+    var b=rowBounds('MATERIAL PARADIDÁTICO');
+    var seg=xml.slice(b.start,b.end);
+    // Lapbooks (Censo não separa G4/G5 — linha combinada)
+    if(lapQ>0){
+      seg=replFirst(seg,'>XX Lapbooks EI - G4<','>'+esc(fmtQ(lapQ))+' Lapbooks EI - G4/G5<');
+      seg=removeParaInSeg(seg,'XX Lapbooks EI - G5');
+    }else{
+      seg=removeParaInSeg(seg,'XX Lapbooks EI - G4');
+      seg=removeParaInSeg(seg,'XX Lapbooks EI - G5');
+    }
+    // Livros 1º–5º
+    if(det.l2a5_leg>0){ // planilha antiga: sem quebra por ano
+      seg=(det.l1>0)?replFirst(seg,'>XX Livros EF - 1º Ano<','>'+esc(fmtQ(det.l1))+' Livros EF - 1º Ano<'):removeParaInSeg(seg,'XX Livros EF - 1º Ano');
+      seg=replFirst(seg,'>XX Livros EF - 2º Ano<','>'+esc(fmtQ(det.l2a5_leg))+' Livros EF - 2º ao 5º Ano<');
+      seg=removeParaInSeg(seg,'XX Livros EF - 3º Ano');
+      seg=removeParaInSeg(seg,'XX Livros EF - 4º Ano');
+      seg=removeParaInSeg(seg,'XX Livros EF - 5º Ano');
+    }else{
+      [[det.l1,'1º'],[det.l2,'2º'],[det.l3,'3º'],[det.l4,'4º'],[det.l5,'5º']].forEach(function(a){
+        var tok='>XX Livros EF - '+a[1]+' Ano<';
+        seg=(a[0]>0)?replFirst(seg,tok,'>'+esc(fmtQ(a[0]))+' Livros EF - '+a[1]+' Ano<'):removeParaInSeg(seg,'XX Livros EF - '+a[1]+' Ano');
+      });
+    }
+    // Livros 6º–9º
+    if(det.l6a9_leg>0){
+      seg=replFirst(seg,'>XX Livros EF - 6º Ano<','>'+esc(fmtQ(det.l6a9_leg))+' Livros EF - 6º ao 9º Ano<');
+      seg=removeParaInSeg(seg,'XX Livros EF - 7º Ano');
+      seg=removeParaInSeg(seg,'XX Livros EF - 8º Ano');
+      seg=removeParaInSeg(seg,'XX Livros EF - 9º Ano');
+    }else{
+      [[det.l6,'6º'],[det.l7,'7º'],[det.l8,'8º'],[det.l9,'9º']].forEach(function(a){
+        var tok='>XX Livros EF - '+a[1]+' Ano<';
+        seg=(a[0]>0)?replFirst(seg,tok,'>'+esc(fmtQ(a[0]))+' Livros EF - '+a[1]+' Ano<'):removeParaInSeg(seg,'XX Livros EF - '+a[1]+' Ano');
+      });
+    }
+    seg=replFirst(seg,'>XX<','>'+esc(fmtQ(paraQ))+'<');
+    seg=replFirst(seg,'>R$ XXXX,XX<','>'+esc('R$ '+fmtBR(paraTot/paraQ))+'<');
+    seg=replFirst(seg,'>R$ XXX,XX<','>'+esc('R$ '+fmtBR(paraTot))+'<');
+    seg=stripHl(seg);
+    xml=xml.slice(0,b.start)+seg+xml.slice(b.end);
+    produtosTot+=paraTot;
+  }else{
+    removeRow('MATERIAL PARADIDÁTICO');
+    removeSection('MATERIAL PARADIDÁTICO','ANEXO II');
+  }
+
+  // ===== 1.2) Linha VALOR TOTAL (inserida após a última linha presente) =====
+  var lastMarker=null;
+  var ordem=[['MATERIAL PARADIDÁTICO',paraQ],['PLACA DE PROGRAMAÇÃO BBC MICRO:BIT',P.microbit.qtd],
+    ['CABO DE FORÇA 2P+T',P.cabo.qtd],['MULTI-CHARGER USB-C 11+',P.mc_af.qtd],['MULTI-CHARGER USB-C 8+',P.mc_ai.qtd],
+    ['45657 - PACOTE',temFll?1:0],['45834 – CONJUNTO',temFll?1:0],
+    ['45522 – CONJUNTO',P.comp_ia11.qtd],['45521 – CONJUNTO',P.comp_ia8.qtd],
+    ['45210 – CONJUNTO',P.mais_mat.qtd],['10913 – CONJUNTO',P.lego_duplo.qtd],
+    ['CONJUNTO EXPLORADORES DE MÁQUINAS',P.explorador.qtd]];
+  for(var oi=0;oi<ordem.length;oi++){ if(ordem[oi][1]>0){ lastMarker=ordem[oi][0]; break; } }
+  if(lastMarker){
+    var lb=rowBounds(lastMarker);
+    var brd='<w:tcBorders><w:top w:val="single" w:sz="6" w:space="0" w:color="auto"/><w:left w:val="single" w:sz="6" w:space="0" w:color="auto"/><w:bottom w:val="single" w:sz="6" w:space="0" w:color="auto"/><w:right w:val="single" w:sz="6" w:space="0" w:color="auto"/></w:tcBorders>';
+    var trTot='<w:tr><w:trPr><w:trHeight w:val="440"/></w:trPr>'
+      +'<w:tc><w:tcPr><w:tcW w:w="7564" w:type="dxa"/><w:gridSpan w:val="3"/>'+brd+'<w:vAlign w:val="center"/></w:tcPr>'
+      +'<w:p><w:pPr><w:jc w:val="right"/><w:rPr><w:b/></w:rPr></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t xml:space="preserve">VALOR TOTAL </w:t></w:r></w:p></w:tc>'
+      +'<w:tc><w:tcPr><w:tcW w:w="1506" w:type="dxa"/>'+brd+'<w:vAlign w:val="center"/></w:tcPr>'
+      +'<w:p><w:pPr><w:jc w:val="center"/><w:rPr><w:b/></w:rPr></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t>'+esc('R$ '+fmtBR(produtosTot))+'</w:t></w:r></w:p></w:tc></w:tr>';
+    xml=xml.slice(0,lb.end)+trTot+xml.slice(lb.end);
+  }
+
+  // ===== 1.3) Serviços =====
+  removeRow('FORMAÇÃO LEGO® EDUCATION ACADEMY - LEA');
+  removeRow('ACOMPANHAMENTO PEDAGÓGICO ');
+  removeSection('B. FORMAÇÃO LEGO® EDUCATION ACADEMY (LEA)','C.\u00a0FORMAÇÃO DE\u00a0EDUCADORES');
+  removeSection('D.\u00a0ACOMPANHAMENTO PEDAGÓGICO','E. GARANTIA E SUPORTE TÉCNICO');
+  var totForm=D.horasForm*D.formUnit;
+  (function(){
+    var b=rowBounds('FORMAÇÃO DE EDUCADORES');if(!b)return;
+    var seg=xml.slice(b.start,b.end);
+    seg=replFirst(seg,'>xx<','>'+esc(fmtQ(D.horasForm))+'<');
+    seg=replFirst(seg,'>R$ xxx,xx<','>'+esc('R$ '+fmtBR(D.formUnit))+'<');
+    seg=replFirst(seg,'>xxxxx,xx<','>'+esc(fmtBR(totForm))+'<');
+    seg=stripHl(seg);
+    xml=xml.slice(0,b.start)+seg+xml.slice(b.end);
+  })();
+  setText('>R$ xxxxx,xx<','>'+esc('R$ '+fmtBR(totForm))+'<');             // VALOR TOTAL 1.3
+  stripHlPara('R$ '+fmtBR(totForm));
+
+  // ===== TOTAL GERAL =====
+  var grand=nexisTot+produtosTot+totForm;
+  setText('>XXXX,XX <','>'+esc(fmtBR(grand))+' <');
+  setText('>EXTENSO<','>'+esc(extenso(grand))+'<');
+  stripHlPara(fmtBR(grand)+' ');
+
+  return {xml:xml, grand:grand, produtosTot:produtosTot, nexisTot:nexisTot, totForm:totForm};
+}
+
+async function baixarProposta(evt){
+  var agg=window._agg;
+  if(!agg){alert('Calcule a simulação primeiro.');return;}
+  var btn=evt?evt.target.closest('button'):null;
+  var orig=btn?btn.innerHTML:'';
+  if(btn){btn.innerHTML='<span class="material-icons-outlined">hourglass_top</span> Gerando...';btn.disabled=true;}
+  try{
+    var resp=await fetch('data/proposta_template.docx');
+    if(!resp.ok) throw new Error('Template não encontrado na pasta data/');
+    var buf=await resp.arrayBuffer();
+    var zip=await JSZip.loadAsync(buf);
+    var xml=await zip.file('word/document.xml').async('string');
+
+    // Number to Portuguese extenso
+    function extenso(n){
+      n=Math.round(n*100)/100;
+      var cents=Math.round((n%1)*100);
+      var intPart=Math.floor(n);
+      var u=['','UM','DOIS','TR\u00caS','QUATRO','CINCO','SEIS','SETE','OITO','NOVE'];
+      var t=['','DEZ','VINTE','TRINTA','QUARENTA','CINQUENTA','SESSENTA','SETENTA','OITENTA','NOVENTA'];
+      var d11=['ONZE','DOZE','TREZE','QUATORZE','QUINZE','DEZESSEIS','DEZESSETE','DEZOITO','DEZENOVE'];
+      var c=['','CENTO','DUZENTOS','TREZENTOS','QUATROCENTOS','QUINHENTOS','SEISCENTOS','SETECENTOS','OITOCENTOS','NOVECENTOS'];
+      function grupo(n){
+        if(n===0) return '';
+        if(n===100) return 'CEM';
+        var r='';
+        if(Math.floor(n/100)>0){r+=c[Math.floor(n/100)]; n=n%100; if(n>0)r+=' E ';}
+        if(n>=11&&n<=19){return r+d11[n-11];}
+        if(Math.floor(n/10)>0){r+=t[Math.floor(n/10)]; if(n%10>0)r+=' E ';}
+        if(n%10>0){r+=u[n%10];}
+        return r;
+      }
+      if(n===0) return 'ZERO REAIS';
+      var parts=[];
+      var bilhoes=Math.floor(intPart/1000000000);
+      var milhoes=Math.floor((intPart%1000000000)/1000000);
+      var milhar=Math.floor((intPart%1000000)/1000);
+      var resto=intPart%1000;
+      if(bilhoes>0) parts.push(grupo(bilhoes)+(bilhoes===1?' BILH\u00c3O':' BILH\u00d5ES'));
+      if(milhoes>0) parts.push(grupo(milhoes)+(milhoes===1?' MILH\u00c3O':' MILH\u00d5ES'));
+      if(milhar>0) parts.push(grupo(milhar)+' MIL');
+      if(resto>0) parts.push(grupo(resto));
+      var reais=parts.join(' E ');
+      var s=reais+(intPart===1?' REAL':' REAIS');
+      if(cents>0) s+=' E '+grupo(cents)+(cents===1?' CENTAVO':' CENTAVOS');
+      return s;
+    }
+
+    function getQ(names){
+      var arr=Array.isArray(names)?names:[names];
+      for(var i=0;i<arr.length;i++){
+        var k=Object.keys(agg).find(function(k){return k.indexOf(arr[i])>=0;});
+        if(k) return {qtd:agg[k].qtd,unit:agg[k].unit};
+      }
+      return {qtd:0,unit:0};
+    }
+
+    var nexisLic=0;
+    Object.entries(agg).forEach(function(e){if(e[0].indexOf('Nexis')>=0)nexisLic+=e[1].qtd;});
+    var horasForm=0;
+    Object.entries(agg).forEach(function(e){if(e[0].indexOf('Forma\u00e7\u00e3o')>=0)horasForm+=e[1].qtd;});
+
+    var mcAI=getQ('Multicharger (AI)'), mcAF=getQ('Multicharger (AF)');
+    var cbAI=getQ('Cabo Multicharger (AI)'), cbAF=getQ('Cabo Multicharger (AF)');
+    var mbAI=getQ('micro:bit (AI)'), mbAF=getQ('micro:bit (AF)');
+    var tapAI=getQ('Tapete (AI)'), tapAF=getQ('Tapete (AF)');
+    var det=window._det||{lapbook_g4g5:0,l1:0,l2:0,l3:0,l4:0,l5:0,l6:0,l7:0,l8:0,l9:0,l2a5_leg:0,l6a9_leg:0};
+
+    var meses=['janeiro','fevereiro','mar\u00e7o','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    var hoje=new Date();
+    var D={
+      rede:S.rede,
+      entidade:S.rede==='municipio'?('PREFEITURA MUNICIPAL DE '+(S.mun_nome||'').toUpperCase()+' \u2013 '+S.uf):('GOVERNO DO ESTADO DE '+(S.uf_nome||'').toUpperCase()),
+      dia:String(hoje.getDate()), mes:meses[hoje.getMonth()],
+      nexis:{qtd:nexisLic,unit:S.prices.nexis||0},
+      horasForm:horasForm, formUnit:S.prices.formacao||0,
+      p:{
+        explorador:getQ('Exploradores'),
+        lego_duplo:getQ('LEGO Duplo'),
+        mais_mat:getQ('Mais Matem'),
+        comp_ia8:getQ('IA 8+'),
+        comp_ia11:getQ('IA 11+'),
+        fll_tapete:{qtd:tapAI.qtd+tapAF.qtd,unit:tapAI.unit||tapAF.unit||S.prices.fll_tapete_ai||0},
+        fll_motor:getQ('Motor Simples'),
+        fll_ctrl:getQ('Controlador'),
+        fll_cartao:getQ('Cart\u00e3o'),
+        mc_ai:mcAI, mc_af:mcAF,
+        cabo:{qtd:cbAI.qtd+cbAF.qtd,unit:cbAI.unit||cbAF.unit||0,tot:cbAI.qtd*cbAI.unit+cbAF.qtd*cbAF.unit},
+        microbit:{qtd:mbAI.qtd+mbAF.qtd,unit:mbAI.unit||mbAF.unit||0,tot:mbAI.qtd*mbAI.unit+mbAF.qtd*mbAF.unit}
+      },
+      det:det,
+      precos:{lapbook_ei:S.prices.lapbook_ei||0,livro_ai:S.prices.livro_ai||0,livro_af:S.prices.livro_af||0}
+    };
+
+    var res=gerarXmlProposta(xml,D,extenso);
+
+    zip.file('word/document.xml',res.xml);
+    var blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;
+    a.download='Proposta_Nexis_'+S.uf+'_'+new Date().toISOString().slice(0,10)+'.docx';
+    a.click();
+    URL.revokeObjectURL(url);
+
+  }catch(err){
+    console.error(err);
+    alert('Erro ao gerar proposta: '+err.message);
+  }finally{
+    if(btn){btn.innerHTML=orig;btn.disabled=false;}
+  }
+}
+
+</script>
+</body>
+</html>
