@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* ============================================================
    EDUCACIONAL DESIGN SYSTEM 2.0.3 — CSS TOKENS
@@ -832,6 +833,100 @@ function addAgg(agg,prod,qtd,unit,cat){
   agg[prod].qtd+=qtd;
 }
 
+// ===== Catálogo padronizado (mesmos nomes da aba "Inserir preços") =====
+var CATALOGO={
+  explorador:{sap:'9203595',desc:'Exploradores de Máquinas (kit)',cat:'EI'},
+  lego_duplo:{sap:'9203677',desc:'LEGO CX DE PEÇAS DELUXE - 10914 (kit)',cat:'EI'},
+  lapbook_ei:{sap:'XXXXX',desc:'Lapbook G4/G5 (por aluno)',cat:'EI'},
+  mais_mat:{sap:'9202605',desc:'+MATEMÁTICA 1-2-CONJ. PRINC, (NAC) 45210 (kit)',cat:'AI'},
+  comp_ia8:{sap:'9203546',desc:'LE CS& IA 8+ 45521 (kit)',cat:'AI'},
+  livro_ai:{sap:'XXXXX',desc:'Livro 1º ao 5º Ano (por aluno)',cat:'AI'},
+  fll_tapete_ai:{sap:'9203645',desc:'FLL 8+ 11+ 26.27 BIOGLOW - 45834',cat:'AI'},
+  fll_motor_ai:{sap:'9203655',desc:'45650 - LE SINGLE MOTOR SUB FLL',cat:'AI'},
+  fll_ctrl_ai:{sap:'9203656',desc:'45652 - LE CONTROLLER SUB FLL',cat:'AI'},
+  fll_cartao_ai:{sap:'9203666',desc:'45657 - LE CONNECTION CARDS PACK SUB FLL',cat:'AI'},
+  microbit_ai:{sap:'111767192',desc:'PLACA BBC MICROBIT V2.2 (AI)',cat:'AI'},
+  multicharger_ai:{sap:'9203415',desc:'LE MULTI-CHARGER 8 USB C - 45624 (AI)',cat:'AI'},
+  cabo_multicharger_ai:{sap:'11234529',desc:'CABO DE FORCA 2P+T 10 A C5 1.2M (AI)',cat:'AI'},
+  comp_ia11:{sap:'9203547',desc:'LE CS & IA 11+ 45522 (kit)',cat:'AF'},
+  livro_af:{sap:'XXXXX',desc:'Livro 6º ao 9º Ano (por aluno)',cat:'AF'},
+  fll_tapete_af:{sap:'9203645',desc:'FLL 8+ 11+ 26.27 BIOGLOW - 45834 (AF)',cat:'AF'},
+  microbit_af:{sap:'111767192',desc:'PLACA BBC MICROBIT V2.2 (AF)',cat:'AF'},
+  multicharger_af:{sap:'9203415',desc:'LE MULTI-CHARGER 8 USB C - 45624 (AF)',cat:'AF'},
+  cabo_multicharger_af:{sap:'11234529',desc:'CABO DE FORCA 2P+T 10 A C5 1.2M (AF)',cat:'AF'},
+  nexis:{sap:'XXXXX',desc:'Licença Nexis por aluno/ano',cat:'GERAL'},
+  formacao:{sap:'XXXXX',desc:'Formação de Educadores (hora)',cat:'GERAL'}
+};
+var CATALOGO_ORDEM=['explorador','lego_duplo','lapbook_ei','mais_mat','comp_ia8','livro_ai','fll_tapete_ai','fll_motor_ai','fll_ctrl_ai','fll_cartao_ai','microbit_ai','multicharger_ai','cabo_multicharger_ai','comp_ia11','livro_af','fll_tapete_af','microbit_af','multicharger_af','cabo_multicharger_af','nexis','formacao'];
+
+function catKeyForProd(prod){
+  if(prod.indexOf('Explorador')>=0)return 'explorador';
+  if(prod.indexOf('Duplo')>=0||prod.indexOf('DUPLO')>=0||prod.indexOf('10914')>=0)return 'lego_duplo';
+  if(prod.indexOf('Lapbook G4')>=0)return 'lapbook_ei';
+  if(prod.indexOf('Mais Matem')>=0||prod.indexOf('MATEMÁTICA')>=0)return 'mais_mat';
+  if(prod.indexOf('IA 8+')>=0)return 'comp_ia8';
+  if(prod.indexOf('IA 11+')>=0)return 'comp_ia11';
+  if(prod.indexOf('Livro 1º')>=0||prod.indexOf('Livro 2º')>=0||prod.indexOf('Lapbook 1º')>=0)return 'livro_ai';
+  if(prod.indexOf('Livro 6º')>=0)return 'livro_af';
+  if(prod.indexOf('Tapete')>=0)return prod.indexOf('(AF)')>=0?'fll_tapete_af':'fll_tapete_ai';
+  if(prod.indexOf('Motor')>=0)return 'fll_motor_ai';
+  if(prod.indexOf('Controlador')>=0)return 'fll_ctrl_ai';
+  if(prod.indexOf('Cartão')>=0)return 'fll_cartao_ai';
+  if(prod.indexOf('micro:bit')>=0||prod.indexOf('MICROBIT')>=0)return prod.indexOf('(AF)')>=0?'microbit_af':'microbit_ai';
+  if(prod.indexOf('Cabo')>=0)return prod.indexOf('(AF)')>=0?'cabo_multicharger_af':'cabo_multicharger_ai';
+  if(prod.indexOf('Multicharger')>=0)return prod.indexOf('(AF)')>=0?'multicharger_af':'multicharger_ai';
+  if(prod.indexOf('Nexis')>=0)return 'nexis';
+  if(prod.indexOf('Formação')>=0||prod.indexOf('formação')>=0)return 'formacao';
+  return null;
+}
+
+// Consolida o agg bruto no catálogo padronizado, na ordem EI → AI → AF → Itens Gerais
+function normalizeAgg(agg){
+  var acc={};
+  Object.entries(agg).forEach(function(entry){
+    var prod=entry[0],d=entry[1];
+    var k=catKeyForProd(prod);
+    if(!k){ acc['__'+prod]={sap:'XXXXX',desc:prod,cat:d.cat||'GERAL',qtd:d.qtd,unit:d.unit,tot:d.qtd*d.unit}; return; }
+    if(!acc[k]) acc[k]={sap:CATALOGO[k].sap,desc:CATALOGO[k].desc,cat:CATALOGO[k].cat,qtd:0,unit:d.unit,tot:0};
+    acc[k].qtd+=d.qtd; acc[k].tot+=d.qtd*d.unit;
+  });
+  var out=[];
+  CATALOGO_ORDEM.forEach(function(k){ if(acc[k]){ out.push(acc[k]); delete acc[k]; } });
+  Object.keys(acc).forEach(function(k){ out.push(acc[k]); });
+  return out;
+}
+
+function baixarQuantitativos(){
+  var agg=window._agg;
+  if(!agg){alert('Calcule a simulação primeiro.');return;}
+  var segNome={EI:'Educação Infantil',AI:'Anos Iniciais',AF:'Anos Finais',GERAL:'Itens Gerais'};
+  var ordem={EI:0,AI:1,AF:2,GERAL:3};
+  var rows=normalizeAgg(agg).sort(function(a,b){return (ordem[a.cat]!==undefined?ordem[a.cat]:9)-(ordem[b.cat]!==undefined?ordem[b.cat]:9);});
+  var aoa=[['Código SAP','Descrição','Quantidade','Valor Unitário','Segmento','Valor Total']];
+  var grand=0;
+  rows.forEach(function(d){
+    grand+=d.tot;
+    aoa.push([d.sap,d.desc,d.qtd,d.unit,segNome[d.cat]||d.cat,d.tot]);
+  });
+  aoa.push(['','VALOR GLOBAL DO PROJETO','','','',grand]);
+  var ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:12},{wch:48},{wch:12},{wch:14},{wch:18},{wch:16}];
+  // formatação monetária e numérica
+  var range=XLSX.utils.decode_range(ws['!ref']);
+  for(var R=1;R<=range.e.r;R++){
+    var cQ=ws[XLSX.utils.encode_cell({r:R,c:2})];
+    var cU=ws[XLSX.utils.encode_cell({r:R,c:3})];
+    var cT=ws[XLSX.utils.encode_cell({r:R,c:5})];
+    if(cQ&&typeof cQ.v==='number')cQ.z='#,##0';
+    if(cU&&typeof cU.v==='number')cU.z='"R$" #,##0.00';
+    if(cT&&typeof cT.v==='number')cT.z='"R$" #,##0.00';
+  }
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Quantitativos');
+  var nome='Quantitativos_Nexis_'+S.uf+(S.rede==='municipio'&&S.mun_nome?'_'+S.mun_nome.replace(/\s+/g,'_'):'')+'_'+new Date().toISOString().slice(0,10)+'.xlsx';
+  XLSX.writeFile(wb,nome);
+}
+
 function buildDetalheHTML(){
   var det=window._det;
   if(!det) return '';
@@ -868,17 +963,17 @@ function buildResultsHTML(agg, totalEscolas, totalAlunos, netLabel){
   var catOrder={EI:0,AI:1,AF:2,GERAL:3};
   var catNames={EI:'Educação Infantil',AI:'Anos Iniciais',AF:'Anos Finais',GERAL:'Itens Gerais'};
   var pillClass={EI:'pill-ei',AI:'pill-ai',AF:'pill-af',GERAL:'pill-geral'};
-  var rows=Object.entries(agg).sort(function(a,b){return (catOrder[a[1].cat]||9)-(catOrder[b[1].cat]||9);});
+  var rows=normalizeAgg(agg).sort(function(a,b){return (catOrder[a.cat]!==undefined?catOrder[a.cat]:9)-(catOrder[b.cat]!==undefined?catOrder[b.cat]:9);});
   var grand=0,tbody='',lastCat=null,catTot=0;
-  rows.forEach(function(entry){
-    var prod=entry[0],d=entry[1];
-    var tot=d.qtd*d.unit; grand+=tot;
+  rows.forEach(function(d){
+    var tot=d.tot; grand+=tot;
     if(d.cat!==lastCat){
       if(lastCat!==null) tbody+='<tr class="subtotal-row"><td colspan="2" style="text-align:right">Subtotal — '+catNames[lastCat]+'</td><td></td><td>R$ '+fmt(catTot)+'</td></tr>';
       lastCat=d.cat; catTot=0;
     }
     catTot+=tot;
-    tbody+='<tr><td><span class="seg-pill '+pillClass[d.cat]+'">'+d.cat+'</span>'+prod+'</td><td>'+d.qtd.toLocaleString('pt-BR')+'</td><td>'+(d.unit>0?'R$ '+fmt(d.unit):'—')+'</td><td>'+(d.unit>0?'R$ '+fmt(tot):'—')+'</td></tr>';
+    var nome=(d.sap&&d.sap!=='XXXXX'?d.sap+' - ':'')+d.desc;
+    tbody+='<tr><td><span class="seg-pill '+pillClass[d.cat]+'">'+d.cat+'</span>'+nome+'</td><td>'+d.qtd.toLocaleString('pt-BR')+'</td><td>'+(d.unit>0?'R$ '+fmt(d.unit):'—')+'</td><td>'+(d.unit>0?'R$ '+fmt(tot):'—')+'</td></tr>';
   });
   if(lastCat) tbody+='<tr class="subtotal-row"><td colspan="2" style="text-align:right">Subtotal — '+catNames[lastCat]+'</td><td></td><td>R$ '+fmt(catTot)+'</td></tr>';
 
@@ -904,6 +999,7 @@ function buildResultsHTML(agg, totalEscolas, totalAlunos, netLabel){
     +buildDetalheHTML()
     +'<div class="results-footer">'
     +'<button class="btn-filled" onclick="downloadCSV()"><span class="material-icons-outlined">download</span> Baixar detalhamento (.csv)</button>'
+    +'<button class="btn-filled" onclick="baixarQuantitativos()"><span class="material-icons-outlined">table_view</span> Baixar quantitativos (.xlsx)</button>'
     +'<button class="btn-outlined" onclick="location.reload()"><span class="material-icons-outlined">refresh</span> Nova simulação</button>'
     +'<button class="btn-outlined" onclick="document.getElementById(\'upload-csv-input\').click()"><span class="material-icons-outlined">upload_file</span> Upar planilha editada</button>'
     +'<input type="file" id="upload-csv-input" accept=".csv" style="display:none" onchange="processarCSVEditado(this)">'
