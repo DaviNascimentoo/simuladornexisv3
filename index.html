@@ -890,9 +890,26 @@ function normalizeAgg(agg){
     if(!acc[k]) acc[k]={sap:CATALOGO[k].sap,desc:CATALOGO[k].desc,cat:CATALOGO[k].cat,qtd:0,unit:d.unit,tot:0};
     acc[k].qtd+=d.qtd; acc[k].tot+=d.qtd*d.unit;
   });
+  // expande livros por série (usa o detalhamento do Censo)
+  var det=window._det||{};
+  function expandLivros(key,anos,legQtd,legDesc){
+    if(!acc[key]) return;
+    var u=acc[key].unit, cat=acc[key].cat, soma=0;
+    anos.forEach(function(a){soma+=a[0]||0;}); soma+=legQtd||0;
+    if(soma<=0 || Math.round(soma)!==Math.round(acc[key].qtd)) return; // sem detalhe confiável: mantém linha única
+    var exp=[];
+    anos.forEach(function(a){
+      if(a[0]>0) exp.push({sap:'XXXXX',desc:'Livro '+a[1]+' Ano (por aluno)',cat:cat,qtd:a[0],unit:u,tot:a[0]*u});
+    });
+    if(legQtd>0) exp.push({sap:'XXXXX',desc:legDesc,cat:cat,qtd:legQtd,unit:u,tot:legQtd*u});
+    acc[key]={__expanded:exp};
+  }
+  expandLivros('livro_ai',[[det.l1,'1º'],[det.l2,'2º'],[det.l3,'3º'],[det.l4,'4º'],[det.l5,'5º']],det.l2a5_leg,'Livro 2º ao 5º Ano (por aluno)');
+  expandLivros('livro_af',[[det.l6,'6º'],[det.l7,'7º'],[det.l8,'8º'],[det.l9,'9º']],det.l6a9_leg,'Livro 6º ao 9º Ano (por aluno)');
   var out=[];
-  CATALOGO_ORDEM.forEach(function(k){ if(acc[k]){ out.push(acc[k]); delete acc[k]; } });
-  Object.keys(acc).forEach(function(k){ out.push(acc[k]); });
+  function pushEntry(e){ if(e.__expanded){ e.__expanded.forEach(function(x){out.push(x);}); } else { out.push(e); } }
+  CATALOGO_ORDEM.forEach(function(k){ if(acc[k]){ pushEntry(acc[k]); delete acc[k]; } });
+  Object.keys(acc).forEach(function(k){ pushEntry(acc[k]); });
   return out;
 }
 
@@ -925,38 +942,6 @@ function baixarQuantitativos(){
   XLSX.utils.book_append_sheet(wb,ws,'Quantitativos');
   var nome='Quantitativos_Nexis_'+S.uf+(S.rede==='municipio'&&S.mun_nome?'_'+S.mun_nome.replace(/\s+/g,'_'):'')+'_'+new Date().toISOString().slice(0,10)+'.xlsx';
   XLSX.writeFile(wb,nome);
-}
-
-function buildDetalheHTML(){
-  var det=window._det;
-  if(!det) return '';
-  var linhas=[
-    ['Lapbook — G4 e G5 (Educação Infantil)',det.lapbook_g4g5],
-    ['Livros — 1º Ano',det.l1],
-    ['Livros — 2º Ano',det.l2],
-    ['Livros — 3º Ano',det.l3],
-    ['Livros — 4º Ano',det.l4],
-    ['Livros — 5º Ano',det.l5],
-    ['Livros — 2º ao 5º Ano (base antiga)',det.l2a5_leg],
-    ['Livros — 6º Ano',det.l6],
-    ['Livros — 7º Ano',det.l7],
-    ['Livros — 8º Ano',det.l8],
-    ['Livros — 9º Ano',det.l9],
-    ['Livros — 6º ao 9º Ano (base antiga)',det.l6a9_leg]
-  ].filter(function(l){return l[1]>0;});
-  if(!linhas.length) return '';
-  var totalGeralDet=linhas.reduce(function(s,l){return s+l[1];},0);
-  var h='<div style="margin-top:var(--space-lg)">'
-    +'<div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--sys-on-surface-variant);margin-bottom:var(--space-sm)">Quantitativos detalhados — Lapbooks e Livros</div>'
-    +'<div class="table-wrap"><table>'
-    +'<thead><tr><th>Material</th><th style="text-align:right">Quantidade (alunos)</th></tr></thead><tbody>';
-  linhas.forEach(function(l){
-    h+='<tr><td>'+l[0]+'</td><td style="text-align:right">'+fmtQ(l[1])+'</td></tr>';
-  });
-  h+='</tbody><tfoot><tr><td>Total de materiais paradidáticos</td><td style="text-align:right">'+fmtQ(totalGeralDet)+'</td></tr></tfoot></table></div>'
-    +'<div style="font-size:11px;color:var(--sys-on-surface-variant);margin-top:4px">Obs.: o Censo Escolar (formato escola) informa a pré-escola apenas de forma agregada; por isso o Lapbook é apresentado como G4+G5, sem separação por grupo.</div>'
-    +'</div>';
-  return h;
 }
 
 function buildResultsHTML(agg, totalEscolas, totalAlunos, netLabel){
@@ -996,7 +981,6 @@ function buildResultsHTML(agg, totalEscolas, totalAlunos, netLabel){
     +'<tbody>'+tbody+'</tbody>'
     +'<tfoot><tr><td colspan="3">Valor Global do Projeto</td><td style="text-align:right">R$ '+fmt(grand)+'</td></tr></tfoot>'
     +'</table></div>'
-    +buildDetalheHTML()
     +'<div class="results-footer">'
     +'<button class="btn-filled" onclick="downloadCSV()"><span class="material-icons-outlined">download</span> Baixar detalhamento (.csv)</button>'
     +'<button class="btn-filled" onclick="baixarQuantitativos()"><span class="material-icons-outlined">table_view</span> Baixar quantitativos (.xlsx)</button>'
