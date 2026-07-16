@@ -81,6 +81,21 @@ body {
 }
 
 /* ============================================================ APP BAR */
+.admin-btn{margin-left:auto;background:transparent;border:1px solid var(--sys-outline-variant);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--sys-on-surface-variant);transition:all .2s}
+.admin-btn:hover{background:var(--sys-surface-variant);color:var(--sys-primary)}
+.admin-btn.logged{color:var(--sys-primary);border-color:var(--sys-primary)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-box{background:var(--sys-surface);border-radius:16px;box-shadow:var(--elevation-1);width:100%;max-width:640px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-head{display:flex;align-items:center;gap:10px;padding:18px 22px;border-bottom:1px solid var(--sys-outline-variant);font-weight:600;font-size:16px}
+.modal-head .material-icons-outlined{color:var(--sys-primary)}
+.modal-body{padding:18px 22px;overflow-y:auto}
+.modal-foot{display:flex;gap:10px;flex-wrap:wrap;padding:14px 22px;border-top:1px solid var(--sys-outline-variant)}
+.admin-price-table{width:100%;border-collapse:collapse;font-size:13px}
+.admin-price-table th{text-align:left;padding:8px 6px;color:var(--sys-on-surface-variant);font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--sys-outline-variant)}
+.admin-price-table td{padding:6px;border-bottom:1px solid var(--sys-outline-variant)}
+.admin-price-table input{width:110px;padding:6px 8px;border:1px solid var(--sys-outline-variant);border-radius:8px;font-size:13px;text-align:right}
+.admin-seg-row td{padding-top:14px;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--sys-primary);border-bottom:none}
+
 .app-bar {
   background: var(--sys-surface);
   border-bottom: 1px solid var(--sys-outline-variant);
@@ -511,7 +526,39 @@ tfoot td:not(:first-child) { text-align: right; }
   <div>
     <span class="app-bar-title">Simulador Nexis</span>
   </div>
+  <button class="admin-btn" id="btn-admin" onclick="abrirAdmin()" title="Área administrativa"><span class="material-icons-outlined">admin_panel_settings</span></button>
 </header>
+
+<div class="modal-overlay" id="admin-overlay" style="display:none" onclick="if(event.target===this)fecharAdmin()">
+  <div class="modal-box">
+    <div class="modal-head"><span class="material-icons-outlined">admin_panel_settings</span><span id="admin-title">Área administrativa</span></div>
+    <div class="modal-body">
+      <div id="admin-login-view">
+        <label class="form-label">Usuário</label>
+        <input class="text-field" type="text" id="adm-user" autocomplete="off" style="margin-bottom:12px">
+        <label class="form-label">Senha</label>
+        <input class="text-field" type="password" id="adm-pass" onkeydown="if(event.key==='Enter')loginAdmin()">
+        <div id="adm-erro" style="color:#b3261e;font-size:13px;margin-top:8px;display:none">Usuário ou senha incorretos.</div>
+      </div>
+      <div id="admin-panel-view" style="display:none">
+        <p style="font-size:13px;color:var(--sys-on-surface-variant);margin:0 0 12px">Altere os valores pré-preenchidos de cada produto. As alterações valem para novas simulações neste navegador. Para valer para todos os usuários, baixe o <b>precos.json</b> e suba na pasta <code>data/</code> do repositório.</p>
+        <table class="admin-price-table"><thead><tr><th>Código SAP</th><th>Produto</th><th style="text-align:right">Valor padrão (R$)</th></tr></thead><tbody id="admin-price-rows"></tbody></table>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <div id="admin-login-foot" style="display:flex;gap:10px">
+        <button class="btn-filled" onclick="loginAdmin()"><span class="material-icons-outlined">login</span> Entrar</button>
+        <button class="btn-outlined" onclick="fecharAdmin()">Cancelar</button>
+      </div>
+      <div id="admin-panel-foot" style="display:none;gap:10px;flex-wrap:wrap">
+        <button class="btn-filled" onclick="salvarPrecosAdmin()"><span class="material-icons-outlined">save</span> Salvar neste navegador</button>
+        <button class="btn-outlined" onclick="baixarPrecosJson()"><span class="material-icons-outlined">download</span> Baixar precos.json</button>
+        <button class="btn-outlined" onclick="restaurarPrecosPadrao()"><span class="material-icons-outlined">restart_alt</span> Restaurar padrão</button>
+        <button class="btn-outlined" onclick="sairAdmin()"><span class="material-icons-outlined">logout</span> Sair</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="page">
   <div class="stepper" id="stepper">
@@ -761,24 +808,113 @@ var DEFAULT_PRICES = {
   formacao:623.75,
   explorador:359.00, // 9203595 Exploradores de Máquinas
   lego_duplo:610.00, // 9203677 - LEGO CX DE PEÇAS DELUXE - 10914
-  lapbook_ei:340.00, // LAPBOOK G4 E G5
+  lapbook_ei:4.60, // LAPBOOK NEXIS G4 E G5
   mais_mat:253.00, // 9202605 - +MATEMÁTICA 1-2-CONJ. PRINC, (NAC) 45210
   comp_ia8:6765.00, // 9203546 - LE CS& IA 8+ 45521
   livro_ai:340.00, // LIVRO 1o AO 5o ANO
   fll_tapete_ai:4130.00, // 9203645 - FLL 8+ 11+ 26.27 BIOGLOW - 45834
-  fll_motor_ai:755.00, // 9203655 - 45650 - LE SINGLE MOTOR SUB FLL
-  fll_ctrl_ai:447.00, // 9203656 - 45652 - LE CONTROLLER SUB FLL
-  fll_cartao_ai:349.00, // 9203666 - 45657 - LE CONNECTION CARDS PACK SUB FLL
+  fll_motor_ai:755.00, // 9203655 - LEGO EDUCATION SINGLE MOTOR - 45650
+  fll_ctrl_ai:447.00, // 9203656 - LEGO EDUCATION CONTROLLER - 45652
+  fll_cartao_ai:349.00, // 9203666 - LEGO EDU CONNECTION CARDS PACK - 45657
   microbit_ai:345.00, // 111767192 : PLACA BBC MICROBIT V2.2
-  multicharger_ai:2030.00, // 9203415 - LE MULTI-CHARGER 8 USB C - 45624
+  multicharger_ai:2033.00, // 9203415 - LE MULTI-CHARGER 8 USB C - 45624
   cabo_multicharger_ai:49.00, // 11234529 - CABO DE FORCA 2P+T 10 A C5 1.2M
   comp_ia11:8451.00, // 9203547 - LE CS & IA 11+ 45522
   livro_af:340.00, // LIVRO 6o AO 9o ANO
   fll_tapete_af:4130.00, // 9203645 - FLL 8+ 11+ 26.27 BIOGLOW - 45834
   microbit_af:345.00, // 111767192 : PLACA BBC MICROBIT V2.2
-  multicharger_af:2030.00, // 9203415 - LE MULTI-CHARGER 8 USB C - 45624
+  multicharger_af:2033.00, // 9203415 - LE MULTI-CHARGER 8 USB C - 45624
   cabo_multicharger_af:49.00 // 11234529 - CABO DE FORCA 2P+T 10 A C5 1.2M
 };
+
+// ===== Área administrativa (preços padrão) =====
+var FACTORY_PRICES=JSON.parse(JSON.stringify(DEFAULT_PRICES));
+var PRECOS_LS='nexis_precos_admin';
+var ADMIN_SS='nexis_admin_logado';
+
+(function(){
+  function aplicar(obj){ if(!obj)return; Object.keys(obj).forEach(function(k){ if(FACTORY_PRICES.hasOwnProperty(k)&&typeof obj[k]==='number'&&isFinite(obj[k])&&obj[k]>=0) DEFAULT_PRICES[k]=obj[k]; }); }
+  function aplicarLS(){ try{ aplicar(JSON.parse(localStorage.getItem(PRECOS_LS)||'null')); }catch(e){} }
+  fetch('data/precos.json').then(function(r){return r.ok?r.json():null;}).then(function(d){ aplicar(d); aplicarLS(); }).catch(function(){ aplicarLS(); });
+})();
+
+function abrirAdmin(){
+  document.getElementById('admin-overlay').style.display='flex';
+  if(sessionStorage.getItem(ADMIN_SS)==='1'){ mostrarPainelAdmin(); }
+  else{
+    document.getElementById('admin-title').textContent='Área administrativa';
+    document.getElementById('admin-login-view').style.display='block';
+    document.getElementById('admin-panel-view').style.display='none';
+    document.getElementById('admin-login-foot').style.display='flex';
+    document.getElementById('admin-panel-foot').style.display='none';
+    document.getElementById('adm-erro').style.display='none';
+    document.getElementById('adm-user').value=''; document.getElementById('adm-pass').value='';
+    setTimeout(function(){document.getElementById('adm-user').focus();},50);
+  }
+}
+function fecharAdmin(){ document.getElementById('admin-overlay').style.display='none'; }
+function loginAdmin(){
+  var u=document.getElementById('adm-user').value.trim();
+  var p=document.getElementById('adm-pass').value;
+  if(u==='positivo'&&p==='positivo1000'){
+    sessionStorage.setItem(ADMIN_SS,'1');
+    document.getElementById('btn-admin').classList.add('logged');
+    mostrarPainelAdmin();
+  }else{
+    document.getElementById('adm-erro').style.display='block';
+  }
+}
+function sairAdmin(){
+  sessionStorage.removeItem(ADMIN_SS);
+  document.getElementById('btn-admin').classList.remove('logged');
+  fecharAdmin();
+}
+function mostrarPainelAdmin(){
+  document.getElementById('admin-title').textContent='Preços padrão dos produtos';
+  document.getElementById('admin-login-view').style.display='none';
+  document.getElementById('admin-panel-view').style.display='block';
+  document.getElementById('admin-login-foot').style.display='none';
+  document.getElementById('admin-panel-foot').style.display='flex';
+  var segNome={EI:'Educação Infantil',AI:'Anos Iniciais',AF:'Anos Finais',GERAL:'Itens Gerais'};
+  var html='',lastCat=null;
+  CATALOGO_ORDEM.forEach(function(k){
+    var c=CATALOGO[k]; if(!c||!DEFAULT_PRICES.hasOwnProperty(k))return;
+    if(c.cat!==lastCat){ html+='<tr class="admin-seg-row"><td colspan="3">'+segNome[c.cat]+'</td></tr>'; lastCat=c.cat; }
+    html+='<tr><td style="white-space:nowrap">'+c.sap+'</td><td>'+c.desc+'</td><td style="text-align:right"><input type="number" min="0" step="0.01" id="adm-preco-'+k+'" value="'+DEFAULT_PRICES[k]+'"></td></tr>';
+  });
+  document.getElementById('admin-price-rows').innerHTML=html;
+}
+function lerPrecosPainel(){
+  var obj={};
+  CATALOGO_ORDEM.forEach(function(k){
+    var el=document.getElementById('adm-preco-'+k); if(!el)return;
+    var v=parseFloat(el.value);
+    if(isFinite(v)&&v>=0) obj[k]=v;
+  });
+  return obj;
+}
+function salvarPrecosAdmin(){
+  var obj=lerPrecosPainel();
+  Object.keys(obj).forEach(function(k){ DEFAULT_PRICES[k]=obj[k]; });
+  localStorage.setItem(PRECOS_LS,JSON.stringify(obj));
+  alert('Preços padrão atualizados neste navegador. Novas simulações já usam os novos valores.');
+  fecharAdmin();
+}
+function baixarPrecosJson(){
+  var obj=lerPrecosPainel();
+  var blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='precos.json'; a.click();
+  URL.revokeObjectURL(a.href);
+}
+function restaurarPrecosPadrao(){
+  if(!confirm('Restaurar todos os preços para o padrão de fábrica?'))return;
+  Object.keys(FACTORY_PRICES).forEach(function(k){ DEFAULT_PRICES[k]=FACTORY_PRICES[k]; });
+  localStorage.removeItem(PRECOS_LS);
+  mostrarPainelAdmin();
+}
+
+try{ if(sessionStorage.getItem(ADMIN_SS)==='1') document.getElementById('btn-admin').classList.add('logged'); }catch(e){}
 
 function pf(id,lbl){
   var val = S.prices[id] !== undefined ? S.prices[id] : (DEFAULT_PRICES[id] || '');
@@ -794,15 +930,15 @@ function buildStep4(){
   if(S.segs.ei){
     h+='<div class="price-section"><div class="price-section-tag"><span class="material-icons-outlined" style="font-size:14px">child_care</span>Educação Infantil</div>';
     h+='<div class="grid2">'+pf('explorador','9203595 Exploradores de Máquinas (kit)')+pf('lego_duplo','9203677 - LEGO CX DE PEÇAS DELUXE - 10914 (kit)')+'</div>';
-    h+=pf('lapbook_ei','Lapbook G4/G5 (por aluno)'); // LAPBOOK G4 E G5 — obrigatório
+    h+=pf('lapbook_ei','Lapbook NEXIS — G4/G5 (por aluno)'); // LAPBOOK G4 E G5 — obrigatório
     h+='</div>';
   }
   if(S.segs.ai){
     h+='<div class="price-section"><div class="price-section-tag"><span class="material-icons-outlined" style="font-size:14px">menu_book</span>Anos Iniciais</div>';
     h+='<div class="grid2">'+pf('mais_mat','9202605 - +MATEMÁTICA 1-2-CONJ. PRINC, (NAC) 45210 (kit)')+pf('comp_ia8','9203546 - LE CS& IA 8+ 45521 (kit)')+'</div>';
-    if(S.opts.livro_ai) h+=pf('livro_ai','Livro 1º ao 5º Ano (por aluno)'); // LIVRO 1o AO 5o ANO
+    if(S.opts.livro_ai) h+=pf('livro_ai','Livro NEXIS — 1º ao 5º Ano (por aluno)'); // LIVRO 1o AO 5o ANO
     if(S.opts.fll_ai){
-      h+='<div class="grid2">'+pf('fll_tapete_ai','9203645 - FLL 8+ 11+ 26.27 BIOGLOW - 45834')+pf('fll_motor_ai','9203655 - 45650 - LE SINGLE MOTOR SUB FLL')+pf('fll_ctrl_ai','9203656 - 45652 - LE CONTROLLER SUB FLL')+pf('fll_cartao_ai','9203666 - 45657 - LE CONNECTION CARDS PACK SUB FLL')+'</div>';
+      h+='<div class="grid2">'+pf('fll_tapete_ai','9203645 - FLL 8+ 11+ 26.27 BIOGLOW - 45834')+pf('fll_motor_ai','9203655 - LEGO EDUCATION SINGLE MOTOR - 45650')+pf('fll_ctrl_ai','9203656 - LEGO EDUCATION CONTROLLER - 45652')+pf('fll_cartao_ai','9203666 - LEGO EDU CONNECTION CARDS PACK - 45657')+'</div>';
     }
     h+='<div class="divider"></div>';
     h+='<div style="font-size:12px;font-weight:600;color:var(--sys-on-surface-variant);text-transform:uppercase;letter-spacing:.6px;margin-bottom:var(--space-sm)">Itens Obrigatórios — Anos Iniciais</div>';
@@ -811,7 +947,7 @@ function buildStep4(){
   if(S.segs.af){
     h+='<div class="price-section"><div class="price-section-tag"><span class="material-icons-outlined" style="font-size:14px">science</span>Anos Finais</div>';
     h+=pf('comp_ia11','9203547 - LE CS & IA 11+ 45522 (kit)');
-    if(S.opts.livro_af) h+=pf('livro_af','Livro 6º ao 9º Ano (por aluno)'); // LIVRO 6o AO 9o ANO
+    if(S.opts.livro_af) h+=pf('livro_af','Livro NEXIS — 6º ao 9º Ano (por aluno)'); // LIVRO 6o AO 9o ANO
     if(S.opts.fll_af) h+=pf('fll_tapete_af','9203645 - FLL 8+ 11+ 26.27 BIOGLOW - 45834 (por laboratório)');
     h+='<div class="divider"></div>';
     h+='<div style="font-size:12px;font-weight:600;color:var(--sys-on-surface-variant);text-transform:uppercase;letter-spacing:.6px;margin-bottom:var(--space-sm)">Itens Obrigatórios — Anos Finais</div>';
@@ -837,19 +973,19 @@ function addAgg(agg,prod,qtd,unit,cat){
 var CATALOGO={
   explorador:{sap:'9203595',desc:'Exploradores de Máquinas (kit)',cat:'EI'},
   lego_duplo:{sap:'9203677',desc:'LEGO CX DE PEÇAS DELUXE - 10914 (kit)',cat:'EI'},
-  lapbook_ei:{sap:'XXXXX',desc:'Lapbook G4/G5 (por aluno)',cat:'EI'},
+  lapbook_ei:{sap:'XXXXX',desc:'Lapbook NEXIS — G4/G5 (por aluno)',cat:'EI'},
   mais_mat:{sap:'9202605',desc:'+MATEMÁTICA 1-2-CONJ. PRINC, (NAC) 45210 (kit)',cat:'AI'},
   comp_ia8:{sap:'9203546',desc:'LE CS& IA 8+ 45521 (kit)',cat:'AI'},
-  livro_ai:{sap:'XXXXX',desc:'Livro 1º ao 5º Ano (por aluno)',cat:'AI'},
+  livro_ai:{sap:'XXXXX',desc:'Livro NEXIS — 1º ao 5º Ano (por aluno)',cat:'AI'},
   fll_tapete_ai:{sap:'9203645',desc:'FLL 8+ 11+ 26.27 BIOGLOW - 45834',cat:'AI'},
-  fll_motor_ai:{sap:'9203655',desc:'45650 - LE SINGLE MOTOR SUB FLL',cat:'AI'},
-  fll_ctrl_ai:{sap:'9203656',desc:'45652 - LE CONTROLLER SUB FLL',cat:'AI'},
-  fll_cartao_ai:{sap:'9203666',desc:'45657 - LE CONNECTION CARDS PACK SUB FLL',cat:'AI'},
+  fll_motor_ai:{sap:'9203655',desc:'LEGO EDUCATION SINGLE MOTOR - 45650',cat:'AI'},
+  fll_ctrl_ai:{sap:'9203656',desc:'LEGO EDUCATION CONTROLLER - 45652',cat:'AI'},
+  fll_cartao_ai:{sap:'9203666',desc:'LEGO EDU CONNECTION CARDS PACK - 45657',cat:'AI'},
   microbit_ai:{sap:'111767192',desc:'PLACA BBC MICROBIT V2.2 (AI)',cat:'AI'},
   multicharger_ai:{sap:'9203415',desc:'LE MULTI-CHARGER 8 USB C - 45624 (AI)',cat:'AI'},
   cabo_multicharger_ai:{sap:'11234529',desc:'CABO DE FORCA 2P+T 10 A C5 1.2M (AI)',cat:'AI'},
   comp_ia11:{sap:'9203547',desc:'LE CS & IA 11+ 45522 (kit)',cat:'AF'},
-  livro_af:{sap:'XXXXX',desc:'Livro 6º ao 9º Ano (por aluno)',cat:'AF'},
+  livro_af:{sap:'XXXXX',desc:'Livro NEXIS — 6º ao 9º Ano (por aluno)',cat:'AF'},
   fll_tapete_af:{sap:'9203645',desc:'FLL 8+ 11+ 26.27 BIOGLOW - 45834 (AF)',cat:'AF'},
   microbit_af:{sap:'111767192',desc:'PLACA BBC MICROBIT V2.2 (AF)',cat:'AF'},
   multicharger_af:{sap:'9203415',desc:'LE MULTI-CHARGER 8 USB C - 45624 (AF)',cat:'AF'},
@@ -899,13 +1035,13 @@ function normalizeAgg(agg){
     if(soma<=0 || Math.round(soma)!==Math.round(acc[key].qtd)) return; // sem detalhe confiável: mantém linha única
     var exp=[];
     anos.forEach(function(a){
-      if(a[0]>0) exp.push({sap:'XXXXX',desc:'Livro '+a[1]+' Ano (por aluno)',cat:cat,qtd:a[0],unit:u,tot:a[0]*u});
+      if(a[0]>0) exp.push({sap:'XXXXX',desc:'Livro '+a[1]+' Ano NEXIS',cat:cat,qtd:a[0],unit:u,tot:a[0]*u});
     });
     if(legQtd>0) exp.push({sap:'XXXXX',desc:legDesc,cat:cat,qtd:legQtd,unit:u,tot:legQtd*u});
     acc[key]={__expanded:exp};
   }
-  expandLivros('livro_ai',[[det.l1,'1º'],[det.l2,'2º'],[det.l3,'3º'],[det.l4,'4º'],[det.l5,'5º']],det.l2a5_leg,'Livro 2º ao 5º Ano (por aluno)');
-  expandLivros('livro_af',[[det.l6,'6º'],[det.l7,'7º'],[det.l8,'8º'],[det.l9,'9º']],det.l6a9_leg,'Livro 6º ao 9º Ano (por aluno)');
+  expandLivros('livro_ai',[[det.l1,'1º'],[det.l2,'2º'],[det.l3,'3º'],[det.l4,'4º'],[det.l5,'5º']],det.l2a5_leg,'Livro 2º ao 5º Ano NEXIS');
+  expandLivros('livro_af',[[det.l6,'6º'],[det.l7,'7º'],[det.l8,'8º'],[det.l9,'9º']],det.l6a9_leg,'Livro 6º ao 9º Ano NEXIS');
   var out=[];
   function pushEntry(e){ if(e.__expanded){ e.__expanded.forEach(function(x){out.push(x);}); } else { out.push(e); } }
   CATALOGO_ORDEM.forEach(function(k){ if(acc[k]){ pushEntry(acc[k]); delete acc[k]; } });
