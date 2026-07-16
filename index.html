@@ -990,8 +990,8 @@ var CATALOGO={
   microbit_af:{sap:'111767192',desc:'PLACA BBC MICROBIT V2.2 (AF)',cat:'AF'},
   multicharger_af:{sap:'9203415',desc:'LE MULTI-CHARGER 8 USB C - 45624 (AF)',cat:'AF'},
   cabo_multicharger_af:{sap:'11234529',desc:'CABO DE FORCA 2P+T 10 A C5 1.2M (AF)',cat:'AF'},
-  nexis:{sap:'XXXXX',desc:'Licença Nexis por aluno/ano',cat:'GERAL'},
-  formacao:{sap:'XXXXX',desc:'Formação de Educadores (hora)',cat:'GERAL'}
+  nexis:{sap:'10037209',desc:'SUITE EDUCACIONAL - HUB PRO (licença por aluno/ano)',cat:'GERAL'},
+  formacao:{sap:'10002603',desc:'FORMAÇÃO DE EDUCADORES LC116/03 8.02 (hora)',cat:'GERAL'}
 };
 var CATALOGO_ORDEM=['explorador','lego_duplo','lapbook_ei','mais_mat','comp_ia8','livro_ai','fll_tapete_ai','fll_motor_ai','fll_ctrl_ai','fll_cartao_ai','microbit_ai','multicharger_ai','cabo_multicharger_ai','comp_ia11','livro_af','fll_tapete_af','microbit_af','multicharger_af','cabo_multicharger_af','nexis','formacao'];
 
@@ -1035,13 +1035,20 @@ function normalizeAgg(agg){
     if(soma<=0 || Math.round(soma)!==Math.round(acc[key].qtd)) return; // sem detalhe confiável: mantém linha única
     var exp=[];
     anos.forEach(function(a){
-      if(a[0]>0) exp.push({sap:'XXXXX',desc:'Livro '+a[1]+' Ano NEXIS',cat:cat,qtd:a[0],unit:u,tot:a[0]*u});
+      if(a[0]>0) exp.push({sap:a[2]||'XXXXX',desc:'Livro '+a[1]+' Ano NEXIS',cat:cat,qtd:a[0],unit:u,tot:a[0]*u});
     });
     if(legQtd>0) exp.push({sap:'XXXXX',desc:legDesc,cat:cat,qtd:legQtd,unit:u,tot:legQtd*u});
     acc[key]={__expanded:exp};
   }
-  expandLivros('livro_ai',[[det.l1,'1º'],[det.l2,'2º'],[det.l3,'3º'],[det.l4,'4º'],[det.l5,'5º']],det.l2a5_leg,'Livro 2º ao 5º Ano NEXIS');
-  expandLivros('livro_af',[[det.l6,'6º'],[det.l7,'7º'],[det.l8,'8º'],[det.l9,'9º']],det.l6a9_leg,'Livro 6º ao 9º Ano NEXIS');
+  if(acc.lapbook_ei&&!acc.lapbook_ei.__expanded){
+    var LB=acc.lapbook_ei, g4=Math.ceil(LB.qtd/2), g5=LB.qtd-g4;
+    acc.lapbook_ei={__expanded:[
+      {sap:'9203686',desc:'LAPBOOK G4 NEXIS',cat:'EI',qtd:g4,unit:LB.unit,tot:g4*LB.unit},
+      {sap:'9203685',desc:'LAPBOOK G5 NEXIS',cat:'EI',qtd:g5,unit:LB.unit,tot:g5*LB.unit}
+    ].filter(function(x){return x.qtd>0;})};
+  }
+  expandLivros('livro_ai',[[det.l1,'1º','405060'],[det.l2,'2º','405061'],[det.l3,'3º','405062'],[det.l4,'4º','405063'],[det.l5,'5º','405064']],det.l2a5_leg,'Livro 2º ao 5º Ano NEXIS');
+  expandLivros('livro_af',[[det.l6,'6º','405065'],[det.l7,'7º','405066'],[det.l8,'8º','405067'],[det.l9,'9º','405068']],det.l6a9_leg,'Livro 6º ao 9º Ano NEXIS');
   var out=[];
   function pushEntry(e){ if(e.__expanded){ e.__expanded.forEach(function(x){out.push(x);}); } else { out.push(e); } }
   CATALOGO_ORDEM.forEach(function(k){ if(acc[k]){ pushEntry(acc[k]); delete acc[k]; } });
@@ -1451,8 +1458,9 @@ function gerarXmlProposta(xml, D, extenso){
     var seg=xml.slice(b.start,b.end);
     // Lapbooks (Censo não separa G4/G5 — linha combinada)
     if(lapQ>0){
-      seg=replFirst(seg,'>XX Lapbooks EI - G4<','>'+esc(fmtQ(lapQ))+' Lapbooks EI - G4/G5<');
-      seg=removeParaInSeg(seg,'XX Lapbooks EI - G5');
+      var lapG4=Math.ceil(lapQ/2), lapG5=lapQ-lapG4;
+      seg=replFirst(seg,'>XX Lapbooks EI - G4<','>'+esc(fmtQ(lapG4))+' Lapbooks EI - G4<');
+      seg=(lapG5>0)?replFirst(seg,'>XX Lapbooks EI - G5<','>'+esc(fmtQ(lapG5))+' Lapbooks EI - G5<'):removeParaInSeg(seg,'XX Lapbooks EI - G5');
     }else{
       seg=removeParaInSeg(seg,'XX Lapbooks EI - G4');
       seg=removeParaInSeg(seg,'XX Lapbooks EI - G5');
