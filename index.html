@@ -526,7 +526,9 @@ tfoot td:not(:first-child) { text-align: right; }
   <div>
     <span class="app-bar-title">Simulador Nexis</span>
   </div>
-  <button class="admin-btn" id="btn-admin" onclick="abrirAdmin()" title="Área administrativa"><span class="material-icons-outlined">admin_panel_settings</span></button>
+  <button class="admin-btn" id="btn-abrir-nexis" style="margin-left:auto" onclick="abrirNexis()" title="Abrir simulação salva (.nexis)"><span class="material-icons-outlined">folder_open</span></button>
+  <button class="admin-btn" id="btn-admin" style="margin-left:0" onclick="abrirAdmin()" title="Área administrativa"><span class="material-icons-outlined">admin_panel_settings</span></button>
+  <input type="file" id="nexis-file-input" accept=".nexis,application/json" style="display:none" onchange="carregarNexis(this)">
 </header>
 
 <div class="modal-overlay" id="admin-overlay" style="display:none" onclick="if(event.target===this)fecharAdmin()">
@@ -666,7 +668,7 @@ const S = {
 };
 let GEO={};
 
-fetch('data/geo.json').then(r=>r.json()).then(d=>{GEO=d;fillUF();}).catch(e=>console.error(e));
+var GEO_READY=fetch('data/geo.json').then(r=>r.json()).then(d=>{GEO=d;fillUF();}).catch(e=>console.error(e));
 
 function fillUF(){
   const sel=document.getElementById('sel-uf');
@@ -804,18 +806,18 @@ function buildStep3(){
 }
 
 var DEFAULT_PRICES = {
-  nexis:9.40, // LICENÇA NEXIS POR ALUNO/ANO
+  nexis:112.80, // LICENÇA NEXIS POR ALUNO/ANO (anual; na proposta o valor mensal = anual/12)
   formacao:623.75,
   explorador:359.00, // 9203595 Exploradores de Máquinas
   lego_duplo:610.00, // 9203677 - LEGO CX DE PEÇAS DELUXE - 10914
   lapbook_ei:4.60, // LAPBOOK NEXIS G4 E G5
-  mais_mat:253.00, // 9202605 - +MATEMÁTICA 1-2-CONJ. PRINC, (NAC) 45210
-  comp_ia8:6765.00, // 9203546 - LE CS& IA 8+ 45521
+  comp_ia5:5417.00, // 9203545 - LE CS & IA 5+ - 45520 (substitui o +MATEMÁTICA 45210)
+  comp_ia8:6318.00, // 9203546 - LE CS& IA 8+ 45521
   livro_ai:340.00, // LIVRO 1o AO 5o ANO
   fll_tapete_ai:4130.00, // 9203645 - FLL 8+ 11+ 26.27 BIOGLOW - 45834
-  fll_motor_ai:755.00, // 9203655 - LEGO EDUCATION SINGLE MOTOR - 45650
-  fll_ctrl_ai:447.00, // 9203656 - LEGO EDUCATION CONTROLLER - 45652
-  fll_cartao_ai:349.00, // 9203666 - LEGO EDU CONNECTION CARDS PACK - 45657
+  fll_motor_ai:2135.00, // 9203655 - LEGO EDUCATION SINGLE MOTOR - 45650
+  fll_ctrl_ai:1399.00, // 9203656 - LEGO EDUCATION CONTROLLER - 45652
+  fll_cartao_ai:454.00, // 9203666 - LEGO EDU CONNECTION CARDS PACK - 45657
   microbit_ai:345.00, // 111767192 : PLACA BBC MICROBIT V2.2
   multicharger_ai:2033.00, // 9203415 - LE MULTI-CHARGER 8 USB C - 45624
   cabo_multicharger_ai:49.00, // 11234529 - CABO DE FORCA 2P+T 10 A C5 1.2M
@@ -829,7 +831,8 @@ var DEFAULT_PRICES = {
 
 // ===== Área administrativa (preços padrão) =====
 var FACTORY_PRICES=JSON.parse(JSON.stringify(DEFAULT_PRICES));
-var PRECOS_LS='nexis_precos_admin';
+var PRECOS_LS='nexis_precos_admin_v2'; // v2: tabela de preços 08/2026 (descarta preços salvos antes desta atualização)
+try{ localStorage.removeItem('nexis_precos_admin'); }catch(e){}
 var ADMIN_SS='nexis_admin_logado';
 
 (function(){
@@ -935,7 +938,7 @@ function buildStep4(){
   }
   if(S.segs.ai){
     h+='<div class="price-section"><div class="price-section-tag"><span class="material-icons-outlined" style="font-size:14px">menu_book</span>Anos Iniciais</div>';
-    h+='<div class="grid2">'+pf('mais_mat','9202605 - +MATEMÁTICA 1-2-CONJ. PRINC, (NAC) 45210 (kit)')+pf('comp_ia8','9203546 - LE CS& IA 8+ 45521 (kit)')+'</div>';
+    h+='<div class="grid2">'+pf('comp_ia5','9203545 - LE CS & IA 5+ - 45520 (kit)')+pf('comp_ia8','9203546 - LE CS& IA 8+ 45521 (kit)')+'</div>';
     if(S.opts.livro_ai) h+=pf('livro_ai','Livro NEXIS — 1º ao 5º Ano (por aluno)'); // LIVRO 1o AO 5o ANO
     if(S.opts.fll_ai){
       h+='<div class="grid2">'+pf('fll_tapete_ai','9203645 - FLL 8+ 11+ 26.27 BIOGLOW - 45834')+pf('fll_motor_ai','9203655 - LEGO EDUCATION SINGLE MOTOR - 45650')+pf('fll_ctrl_ai','9203656 - LEGO EDUCATION CONTROLLER - 45652')+pf('fll_cartao_ai','9203666 - LEGO EDU CONNECTION CARDS PACK - 45657')+'</div>';
@@ -973,8 +976,8 @@ function addAgg(agg,prod,qtd,unit,cat){
 var CATALOGO={
   explorador:{sap:'9203595',desc:'Exploradores de Máquinas (kit)',cat:'EI'},
   lego_duplo:{sap:'9203677',desc:'LEGO CX DE PEÇAS DELUXE - 10914 (kit)',cat:'EI'},
-  lapbook_ei:{sap:'XXXXX',desc:'Lapbook NEXIS — G4/G5 (por aluno)',cat:'EI'},
-  mais_mat:{sap:'9202605',desc:'+MATEMÁTICA 1-2-CONJ. PRINC, (NAC) 45210 (kit)',cat:'AI'},
+  lapbook_ei:{sap:'9203686 / 9203685',desc:'LAPBOOK G4 / G5 NEXIS (por aluno)',cat:'EI'},
+  comp_ia5:{sap:'9203545',desc:'LE CS & IA 5+ - 45520 (kit)',cat:'AI'},
   comp_ia8:{sap:'9203546',desc:'LE CS& IA 8+ 45521 (kit)',cat:'AI'},
   livro_ai:{sap:'XXXXX',desc:'Livro NEXIS — 1º ao 5º Ano (por aluno)',cat:'AI'},
   fll_tapete_ai:{sap:'9203645',desc:'FLL 8+ 11+ 26.27 BIOGLOW - 45834',cat:'AI'},
@@ -993,13 +996,13 @@ var CATALOGO={
   nexis:{sap:'10037209',desc:'SUITE EDUCACIONAL - HUB PRO (licença por aluno/ano)',cat:'GERAL'},
   formacao:{sap:'10002603',desc:'FORMAÇÃO DE EDUCADORES LC116/03 8.02 (hora)',cat:'GERAL'}
 };
-var CATALOGO_ORDEM=['explorador','lego_duplo','lapbook_ei','mais_mat','comp_ia8','livro_ai','fll_tapete_ai','fll_motor_ai','fll_ctrl_ai','fll_cartao_ai','microbit_ai','multicharger_ai','cabo_multicharger_ai','comp_ia11','livro_af','fll_tapete_af','microbit_af','multicharger_af','cabo_multicharger_af','nexis','formacao'];
+var CATALOGO_ORDEM=['explorador','lego_duplo','lapbook_ei','comp_ia5','comp_ia8','livro_ai','fll_tapete_ai','fll_motor_ai','fll_ctrl_ai','fll_cartao_ai','microbit_ai','multicharger_ai','cabo_multicharger_ai','comp_ia11','livro_af','fll_tapete_af','microbit_af','multicharger_af','cabo_multicharger_af','nexis','formacao'];
 
 function catKeyForProd(prod){
   if(prod.indexOf('Explorador')>=0)return 'explorador';
   if(prod.indexOf('Duplo')>=0||prod.indexOf('DUPLO')>=0||prod.indexOf('10914')>=0)return 'lego_duplo';
   if(prod.indexOf('Lapbook G4')>=0)return 'lapbook_ei';
-  if(prod.indexOf('Mais Matem')>=0||prod.indexOf('MATEMÁTICA')>=0)return 'mais_mat';
+  if(prod.indexOf('IA 5+')>=0)return 'comp_ia5';
   if(prod.indexOf('IA 8+')>=0)return 'comp_ia8';
   if(prod.indexOf('IA 11+')>=0)return 'comp_ia11';
   if(prod.indexOf('Livro 1º')>=0||prod.indexOf('Livro 2º')>=0||prod.indexOf('Lapbook 1º')>=0)return 'livro_ai';
@@ -1127,6 +1130,8 @@ function buildResultsHTML(agg, totalEscolas, totalAlunos, netLabel){
     +'<div class="results-footer">'
     +'<button class="btn-filled" onclick="downloadCSV()"><span class="material-icons-outlined">download</span> Baixar detalhamento (.csv)</button>'
     +'<button class="btn-filled" onclick="baixarQuantitativos()"><span class="material-icons-outlined">table_view</span> Baixar quantitativos (.xlsx)</button>'
+    +'<button class="btn-filled" style="background:#0061a4" onclick="salvarNexis()"><span class="material-icons-outlined">save</span> Salvar simulação (.nexis)</button>'
+    +'<button class="btn-outlined" onclick="abrirNexis()"><span class="material-icons-outlined">folder_open</span> Abrir .nexis</button>'
     +'<button class="btn-outlined" onclick="location.reload()"><span class="material-icons-outlined">refresh</span> Nova simulação</button>'
     +'<button class="btn-outlined" onclick="document.getElementById(\'upload-csv-input\').click()"><span class="material-icons-outlined">upload_file</span> Upar planilha editada</button>'
     +'<input type="file" id="upload-csv-input" accept=".csv" style="display:none" onchange="processarCSVEditado(this)">'
@@ -1135,7 +1140,7 @@ function buildResultsHTML(agg, totalEscolas, totalAlunos, netLabel){
 }
 
 async function calcular(){
-  var keys=['nexis','formacao','explorador','lego_duplo','lapbook_ei','mais_mat','comp_ia8','livro_ai','fll_tapete_ai','fll_motor_ai','fll_ctrl_ai','fll_cartao_ai','microbit_ai','multicharger_ai','cabo_multicharger_ai','comp_ia11','livro_af','fll_tapete_af','microbit_af','multicharger_af','cabo_multicharger_af'];
+  var keys=['nexis','formacao','explorador','lego_duplo','lapbook_ei','comp_ia5','comp_ia8','livro_ai','fll_tapete_ai','fll_motor_ai','fll_ctrl_ai','fll_cartao_ai','microbit_ai','multicharger_ai','cabo_multicharger_ai','comp_ia11','livro_af','fll_tapete_af','microbit_af','multicharger_af','cabo_multicharger_af'];
   keys.forEach(function(k){ var el=document.getElementById('p-'+k); if(el) S.prices[k]=parseFloat(el.value)||0; });
   markDone(4); updateStepper(5);
   var area=document.getElementById('results');
@@ -1155,7 +1160,7 @@ async function calcular(){
     var segsEsc=[];
     var row={Escola:e.nome,Municipio:e.mun,UF:S.uf,Dependencia:S.rede==='estado'?'Estadual':'Municipal',Formacao_Total_horas:0,
       EI_Laboratorios:0,EI_Alunos:0,EI_Maior_Turma:0,EI_Exploradores_Maquinas_kits:0,EI_LEGO_Duplo_kits:0,EI_Lapbook_G4G5_alunos:0,EI_Licenca_Nexis_alunos:0,
-      AI_Laboratorios:0,AI_Alunos:0,AI_Alunos_1ano:0,AI_Alunos_2ao5ano:0,AI_Maior_Turma:0,AI_Mais_Matematica_kits:0,AI_Computacao_IA8_kits:0,AI_Livro_1ano_alunos:0,AI_Livro_2ano_alunos:0,AI_Livro_3ano_alunos:0,AI_Livro_4ano_alunos:0,AI_Livro_5ano_alunos:0,AI_FLL_Tapete:0,AI_FLL_Motor_Simples:0,AI_FLL_Controlador:0,AI_FLL_Cartao_Conexao:0,AI_Licenca_Nexis_alunos:0,AI_Microbit_unid:0,AI_Multicharger_unid:0,AI_Cabo_Multicharger_unid:0,
+      AI_Laboratorios:0,AI_Alunos:0,AI_Alunos_1ano:0,AI_Alunos_2ao5ano:0,AI_Maior_Turma:0,AI_Computacao_IA5_kits:0,AI_Computacao_IA8_kits:0,AI_Livro_1ano_alunos:0,AI_Livro_2ano_alunos:0,AI_Livro_3ano_alunos:0,AI_Livro_4ano_alunos:0,AI_Livro_5ano_alunos:0,AI_FLL_Tapete:0,AI_FLL_Motor_Simples:0,AI_FLL_Controlador:0,AI_FLL_Cartao_Conexao:0,AI_Licenca_Nexis_alunos:0,AI_Microbit_unid:0,AI_Multicharger_unid:0,AI_Cabo_Multicharger_unid:0,
       AF_Laboratorios:0,AF_Alunos:0,AF_Maior_Turma:0,AF_Computacao_IA11_kits:0,AF_Livro_6ano_alunos:0,AF_Livro_7ano_alunos:0,AF_Livro_8ano_alunos:0,AF_Livro_9ano_alunos:0,AF_FLL_Tapete:0,AF_Licenca_Nexis_alunos:0,AF_Microbit_unid:0,AF_Multicharger_unid:0,AF_Cabo_Multicharger_unid:0};
 
     if(S.segs.ei&&e.ei_lab>0&&e.ei_mat>0){
@@ -1171,10 +1176,11 @@ async function calcular(){
     }
     if(S.segs.ai&&e.ai_lab>0&&e.ai_mat>0){
       var kplAI=Math.ceil(e.ai_mt/4)||1;
+      var compIA5qtd=kplAI*e.ai_lab;
       var compIA8qtd=kplAI*e.ai_lab;
       var microbit_ai=Math.ceil((e.ai_mt3a5||e.ai_mt)/2)*e.ai_lab;
-      var multicharger_ai=Math.ceil(compIA8qtd/4);
-      addAgg(agg,'Mais Matemática',kplAI*e.ai_lab,S.prices.mais_mat,'AI');
+      var multicharger_ai=Math.ceil((compIA5qtd+compIA8qtd)/4); // 1 carregador a cada 4 kits (IA 5+ e IA 8+)
+      addAgg(agg,'Computação & IA 5+',compIA5qtd,S.prices.comp_ia5,'AI');
       addAgg(agg,'Computação & IA 8+',compIA8qtd,S.prices.comp_ia8,'AI');
       addAgg(agg,'Placa BBC micro:bit (AI)',microbit_ai,S.prices.microbit_ai,'AI');
       addAgg(agg,'Multicharger (AI)',multicharger_ai,S.prices.multicharger_ai,'AI');
@@ -1187,20 +1193,21 @@ async function calcular(){
         else { det.l2a5_leg+=(e.ai_mat2a5||0); }
       }
       if(S.opts.fll_ai){
+        // 1 tapete FLL por laboratório; 4 motores e 4 controladores por tapete; 1 pacote de cartões por tapete
         addAgg(agg,'FLL — Tapete (AI)',e.ai_lab,S.prices.fll_tapete_ai,'AI');
-        addAgg(agg,'FLL — Motor Simples (AI)',2*e.ai_lab,S.prices.fll_motor_ai,'AI');
-        addAgg(agg,'FLL — Controlador (AI)',2*e.ai_lab,S.prices.fll_ctrl_ai,'AI');
-        addAgg(agg,'FLL — Cartão de Conexão (AI)',2*e.ai_lab,S.prices.fll_cartao_ai,'AI');
+        addAgg(agg,'FLL — Motor Simples (AI)',4*e.ai_lab,S.prices.fll_motor_ai,'AI');
+        addAgg(agg,'FLL — Controlador (AI)',4*e.ai_lab,S.prices.fll_ctrl_ai,'AI');
+        addAgg(agg,'FLL — Cartão de Conexão (AI)',1*e.ai_lab,S.prices.fll_cartao_ai,'AI');
       }
       addAgg(agg,'Licença Nexis — AI',e.ai_mat,S.prices.nexis,'GERAL');
       totalAlunos+=e.ai_mat; segsEsc.push('AI');
       row.AI_Laboratorios=e.ai_lab; row.AI_Alunos=e.ai_mat; row.AI_Alunos_1ano=e.ai_mat1; row.AI_Alunos_2ao5ano=e.ai_mat2a5; row.AI_Maior_Turma=e.ai_mt;
-      row.AI_Mais_Matematica_kits=kplAI*e.ai_lab; row.AI_Computacao_IA8_kits=kplAI*e.ai_lab;
+      row.AI_Computacao_IA5_kits=compIA5qtd; row.AI_Computacao_IA8_kits=compIA8qtd;
       row.AI_Livro_1ano_alunos=S.opts.livro_ai?(e.ai_mat1||0):0;
       row.AI_Livro_2ano_alunos=S.opts.livro_ai?(e.ai_mat2||0):0; row.AI_Livro_3ano_alunos=S.opts.livro_ai?(e.ai_mat3||0):0;
       row.AI_Livro_4ano_alunos=S.opts.livro_ai?(e.ai_mat4||0):0; row.AI_Livro_5ano_alunos=S.opts.livro_ai?(e.ai_mat5||0):0;
-      row.AI_FLL_Tapete=S.opts.fll_ai?e.ai_lab:0; row.AI_FLL_Motor_Simples=S.opts.fll_ai?2*e.ai_lab:0;
-      row.AI_FLL_Controlador=S.opts.fll_ai?2*e.ai_lab:0; row.AI_FLL_Cartao_Conexao=S.opts.fll_ai?2*e.ai_lab:0;
+      row.AI_FLL_Tapete=S.opts.fll_ai?e.ai_lab:0; row.AI_FLL_Motor_Simples=S.opts.fll_ai?4*e.ai_lab:0;
+      row.AI_FLL_Controlador=S.opts.fll_ai?4*e.ai_lab:0; row.AI_FLL_Cartao_Conexao=S.opts.fll_ai?1*e.ai_lab:0;
       row.AI_Licenca_Nexis_alunos=e.ai_mat; row.AI_Microbit_unid=microbit_ai; row.AI_Multicharger_unid=multicharger_ai; row.AI_Cabo_Multicharger_unid=multicharger_ai;
     }
     if(S.segs.af&&e.af_lab>0&&e.af_mat>0){
@@ -1265,6 +1272,13 @@ function processarCSVEditado(input){
       headers.forEach(function(h,i){obj[h]=vals[i]?vals[i].trim():'0';});
       return obj;
     });
+    aplicarCSVRows(rows,true);
+  };
+  reader.readAsText(file,'UTF-8');
+  input.value='';
+}
+
+function aplicarCSVRows(rows,avisar){
     var newAgg={}; var newEscolas=0,newAlunos=0;
     var det={lapbook_g4g5:0,l1:0,l2:0,l3:0,l4:0,l5:0,l6:0,l7:0,l8:0,l9:0,l2a5_leg:0,l6a9_leg:0};
     var colMap={
@@ -1272,7 +1286,7 @@ function processarCSVEditado(input){
       EI_LEGO_Duplo_kits:{prod:'LEGO Duplo Deluxe 10914',unit:S.prices.lego_duplo,cat:'EI'},
       EI_Lapbook_G4G5_alunos:{prod:'Lapbook G4/G5',unit:S.prices.lapbook_ei,cat:'EI'},
       EI_Licenca_Nexis_alunos:{prod:'Licença Nexis — EI',unit:S.prices.nexis,cat:'GERAL'},
-      AI_Mais_Matematica_kits:{prod:'Mais Matemática',unit:S.prices.mais_mat,cat:'AI'},
+      AI_Computacao_IA5_kits:{prod:'Computação & IA 5+',unit:S.prices.comp_ia5,cat:'AI'},
       AI_Computacao_IA8_kits:{prod:'Computação & IA 8+',unit:S.prices.comp_ia8,cat:'AI'},
       AI_Livro_1ano_alunos:{prod:'Livro 1º ao 5º Ano',unit:S.prices.livro_ai,cat:'AI'},
       AI_Livro_2ano_alunos:{prod:'Livro 1º ao 5º Ano',unit:S.prices.livro_ai,cat:'AI'},
@@ -1333,18 +1347,125 @@ function processarCSVEditado(input){
     window._csvData=rows; window._agg=newAgg;
     var netLabel=(S.rede==='estado'?('Rede Estadual — '+S.uf_nome):('Rede Municipal — '+S.mun_nome+' ('+S.uf+')'))+'  [planilha editada]';
     var area=document.getElementById('results');
+    area.style.display='block';
     area.innerHTML=buildResultsHTML(newAgg,newEscolas,newAlunos,netLabel);
     window._agg=newAgg;
-    alert('Planilha carregada! '+rows.length+' linhas, '+newEscolas+' escolas.');
-  };
-  reader.readAsText(file,'UTF-8');
-  input.value='';
+    if(avisar) alert('Planilha carregada! '+rows.length+' linhas, '+newEscolas+' escolas.');
 }
 
-// ===== Gerador da Proposta V02/2026 =====
+// ===== Salvar / abrir simulação (arquivo .nexis) =====
+var NEXIS_FILE_VERSION=1;
+var NEXIS_FILE_APP='simulador-nexis-publico';
+
+function coletarPrecosDOM(){
+  Object.keys(DEFAULT_PRICES).forEach(function(k){
+    var el=document.getElementById('p-'+k);
+    if(el&&el.value!==''){ var v=parseFloat(el.value); if(isFinite(v)) S.prices[k]=v; }
+  });
+}
+
+function resumoRede(){ return S.rede==='estado'?((S.uf_nome||'')+' (Estadual)'):((S.mun_nome||'')+' (Municipal)'); }
+function resumoSegs(){
+  var labs=[]; if(S.segs.ei)labs.push('EI'); if(S.segs.ai)labs.push('Fund. AI'); if(S.segs.af)labs.push('Fund. AF');
+  return labs.join(' · ');
+}
+function resumoOpts(){
+  var opts=[]; if(S.opts.lapbook_ei)opts.push('Lapbook EI'); if(S.opts.livro_ai)opts.push('Livros AI (1º–5º)'); if(S.opts.fll_ai)opts.push('FLL AI'); if(S.opts.livro_af)opts.push('Livros AF'); if(S.opts.fll_af)opts.push('FLL AF');
+  return opts.length?opts.join(' · '):'Nenhum opcional';
+}
+
+function salvarNexis(){
+  if(!S.rede||!S.uf){ alert('Preencha e calcule a simulação antes de salvar.'); return; }
+  coletarPrecosDOM();
+  var obj={
+    app:NEXIS_FILE_APP, version:NEXIS_FILE_VERSION,
+    salvo_em:new Date().toISOString(),
+    rede:S.rede, uf:S.uf, uf_nome:S.uf_nome, mun_cod:S.mun_cod, mun_nome:S.mun_nome,
+    segs:S.segs, opts:S.opts, prices:S.prices,
+    csvRows:(window._csvData&&window._csvData.length)?window._csvData:null
+  };
+  var nome='Simulacao_Nexis_'+(S.uf||'XX')
+    +(S.rede==='municipio'&&S.mun_nome?'_'+S.mun_nome.replace(/[^\wÀ-ÿ]+/g,'_'):'')
+    +'_'+new Date().toISOString().slice(0,10)+'.nexis';
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}));
+  a.download=nome; a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
+}
+
+function abrirNexis(){ document.getElementById('nexis-file-input').click(); }
+
+function carregarNexis(input){
+  var file=input.files[0]; input.value=''; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    var o=null;
+    try{ o=JSON.parse(ev.target.result); }catch(err){ alert('Arquivo .nexis inválido ou corrompido.'); return; }
+    if(!o||typeof o!=='object'){ alert('Arquivo .nexis inválido.'); return; }
+    if(o.app!==NEXIS_FILE_APP && !confirm('Este arquivo não parece ser uma simulação do Simulador Nexis. Tentar abrir mesmo assim?')) return;
+    restaurarSimulacao(o).catch(function(err){ console.error(err); alert('Erro ao abrir a simulação: '+err.message); });
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+async function restaurarSimulacao(o){
+  await GEO_READY;
+  if(!o.rede||!o.uf) throw new Error('arquivo sem rede/estado');
+  if(!GEO[o.uf]) throw new Error('estado '+o.uf+' não encontrado na base');
+
+  selectRede(o.rede);
+  var selUF=document.getElementById('sel-uf');
+  selUF.value=o.uf; onUFChange();
+  if(o.rede==='municipio'){
+    var selMun=document.getElementById('sel-mun');
+    selMun.value=String(o.mun_cod||''); onMunChange();
+    if(!S.mun_cod){ S.mun_cod=o.mun_cod||null; S.mun_nome=o.mun_nome||''; }
+    if(!S.mun_cod) throw new Error('município do arquivo não encontrado no estado '+o.uf);
+  }
+  if(o.uf_nome) S.uf_nome=o.uf_nome;
+
+  ['ei','ai','af'].forEach(function(s){
+    var want=!!(o.segs&&o.segs[s]);
+    if(!!S.segs[s]!==want) toggleSeg(s);
+  });
+  if(!S.segs.ei&&!S.segs.ai&&!S.segs.af) throw new Error('arquivo sem segmentos selecionados');
+
+  var op=o.opts||{};
+  S.opts={lapbook_ei:true,
+    livro_ai:!!op.livro_ai, fll_ai:!!op.fll_ai,
+    livro_af:!!op.livro_af, fll_af:!!op.fll_af};
+
+  S.prices={};
+  Object.keys(o.prices||{}).forEach(function(k){
+    if(!DEFAULT_PRICES.hasOwnProperty(k)) return;
+    var v=parseFloat(o.prices[k]); if(isFinite(v)&&v>=0) S.prices[k]=v;
+  });
+
+  document.getElementById('sum1').textContent=resumoRede();
+  document.getElementById('sum2').textContent=resumoSegs();
+  buildStep3();
+  document.getElementById('sum3').textContent=resumoOpts();
+  buildStep4();
+  markDone(1); markDone(2); markDone(3);
+
+  await calcular();
+  if(o.csvRows&&o.csvRows.length) aplicarCSVRows(o.csvRows,false);
+
+  // avisa somente sobre os itens realmente usados nesta simulação (campos visíveis no passo 4)
+  var faltando=Object.keys(DEFAULT_PRICES).filter(function(k){
+    return document.getElementById('p-'+k) && !(o.prices&&o.prices.hasOwnProperty(k));
+  });
+  var aviso='Simulação restaurada: '+resumoRede()+' — '+resumoSegs()+'.';
+  if(o.salvo_em) aviso+='\nArquivo salvo em '+new Date(o.salvo_em).toLocaleString('pt-BR')+'.';
+  if(faltando.length) aviso+='\nAtenção: '+faltando.length+' item(ns) sem preço no arquivo usaram o valor padrão atual.';
+  if(o.csvRows&&o.csvRows.length) aviso+='\nA planilha editada do arquivo (' +o.csvRows.length+ ' linhas) também foi reaplicada.';
+  alert(aviso);
+}
+
+// ===== Gerador da Proposta V04/2026 =====
 // D = {rede:'estado'|'municipio', entidade, dia, mes,
 //      nexis:{qtd,unit}, horasForm, formUnit,
-//      p:{explorador:{qtd,unit}, lego_duplo, mais_mat, comp_ia8, comp_ia11,
+//      p:{explorador:{qtd,unit}, lego_duplo, comp_ia5, comp_ia8, comp_ia11,
 //         fll_tapete, fll_motor, fll_ctrl, fll_cartao,
 //         mc_ai, mc_af, cabo:{qtd,tot}, microbit:{qtd,tot}},
 //      det:{lapbook_g4g5,l1..l9,l2a5_leg,l6a9_leg},
@@ -1395,13 +1516,15 @@ function gerarXmlProposta(xml, D, extenso){
   stripHlPara(esc(D.entidade));
 
   // ===== 1.1) Plataforma =====
+  // O template V04.2026 pede o VALOR MENSAL por licença; o preço do simulador é anual (12 meses).
   var nexisTot=D.nexis.qtd*D.nexis.unit;
+  var nexisMensal=D.nexis.unit/12;
   (function(){
     var b=rowBounds(' xxxxx');if(!b)return;
     var seg=xml.slice(b.start,b.end);
     seg=replFirst(seg,'> xxxxx<','> '+esc(fmtQ(D.nexis.qtd))+'<');
     seg=replFirst(seg,'>XX meses<','>12 meses<');
-    seg=replFirst(seg,'>R$ xxx,xx<','>'+esc('R$ '+fmtBR(D.nexis.unit))+'<');
+    seg=replFirst(seg,'>R$ xxx,xx<','>'+esc('R$ '+fmtBR(nexisMensal))+'<');
     seg=replFirst(seg,'>R$ xxxxx,xx<','>'+esc('R$ '+fmtBR(nexisTot))+'<');
     seg=stripHl(seg);
     xml=xml.slice(0,b.start)+seg+xml.slice(b.end);
@@ -1425,10 +1548,10 @@ function gerarXmlProposta(xml, D, extenso){
     }
   }
   prod('CONJUNTO EXPLORADORES DE MÁQUINAS',P.explorador,'CONJUNTO EXPLORADORES DE MÁQUINAS','CONJUNTO LEGO® DUPLO® DELUXE (10913)');
-  prod('10913 – CONJUNTO',P.lego_duplo,'CONJUNTO LEGO® DUPLO® DELUXE (10913)','CONJUNTO LEGO® EDUCATION MAIS MATEMÁTICA (45210)');
-  prod('45210 – CONJUNTO',P.mais_mat,'CONJUNTO LEGO® EDUCATION MAIS MATEMÁTICA (45210)','CONJUNTO LEGO® EDUCATION COMPUTAÇÃO &amp; IA 8+ (45521)');
-  prod('45521 – CONJUNTO',P.comp_ia8,'CONJUNTO LEGO® EDUCATION COMPUTAÇÃO &amp; IA 8+ (45521)','CONJUNTO LEGO® EDUCATION COMPUTAÇÃO &amp; IA 11+ (45522)');
-  prod('45522 – CONJUNTO',P.comp_ia11,'CONJUNTO LEGO® EDUCATION COMPUTAÇÃO &amp; IA 11+ (45522)','CONJUNTO FIRST® LEGO® LEAGUE FUTURE EDITION (45834)');
+  prod('10913 – CONJUNTO',P.lego_duplo,'CONJUNTO LEGO® DUPLO® DELUXE (10913)','IA 5+ (45520)');
+  prod('45520 – CONJUNTO',P.comp_ia5,'IA 5+ (45520)','IA 8+ (45521)');
+  prod('45521 – CONJUNTO',P.comp_ia8,'IA 8+ (45521)','IA 11+ (45522)');
+  prod('45522 – CONJUNTO',P.comp_ia11,'IA 11+ (45522)','FUTURE EDITION (45834)');
 
   var temFll=P.fll_tapete.qtd>0;
   if(temFll){
@@ -1439,7 +1562,7 @@ function gerarXmlProposta(xml, D, extenso){
   }else{
     removeRow('45834 – CONJUNTO'); removeRow('45650 – MOTOR');
     removeRow('45652 - LEGO'); removeRow('45657 - PACOTE');
-    removeSection('CONJUNTO FIRST® LEGO® LEAGUE FUTURE EDITION (45834)','PLACA DE PROGRAMAÇÃO BBC MICRO:BIT');
+    removeSection('FUTURE EDITION (45834)','PLACA DE PROGRAMAÇÃO BBC MICRO:BIT');
   }
   prod('MULTI-CHARGER USB-C 8+',P.mc_ai);
   prod('MULTI-CHARGER USB-C 11+',P.mc_af);
@@ -1507,7 +1630,7 @@ function gerarXmlProposta(xml, D, extenso){
     ['CABO DE FORÇA 2P+T',P.cabo.qtd],['MULTI-CHARGER USB-C 11+',P.mc_af.qtd],['MULTI-CHARGER USB-C 8+',P.mc_ai.qtd],
     ['45657 - PACOTE',temFll?1:0],['45834 – CONJUNTO',temFll?1:0],
     ['45522 – CONJUNTO',P.comp_ia11.qtd],['45521 – CONJUNTO',P.comp_ia8.qtd],
-    ['45210 – CONJUNTO',P.mais_mat.qtd],['10913 – CONJUNTO',P.lego_duplo.qtd],
+    ['45520 – CONJUNTO',P.comp_ia5.qtd],['10913 – CONJUNTO',P.lego_duplo.qtd],
     ['CONJUNTO EXPLORADORES DE MÁQUINAS',P.explorador.qtd]];
   for(var oi=0;oi<ordem.length;oi++){ if(ordem[oi][1]>0){ lastMarker=ordem[oi][0]; break; } }
   if(lastMarker){
@@ -1627,7 +1750,7 @@ async function baixarProposta(evt){
       p:{
         explorador:getQ('Exploradores'),
         lego_duplo:getQ('LEGO Duplo'),
-        mais_mat:getQ('Mais Matem'),
+        comp_ia5:getQ('IA 5+'),
         comp_ia8:getQ('IA 8+'),
         comp_ia11:getQ('IA 11+'),
         fll_tapete:{qtd:tapAI.qtd+tapAF.qtd,unit:tapAI.unit||tapAF.unit||S.prices.fll_tapete_ai||0},
