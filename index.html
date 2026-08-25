@@ -1480,6 +1480,13 @@ function gerarXmlProposta(xml, D, extenso){
   function stripHlPara(anchor){var from=0;while(true){var i=xml.indexOf(anchor,from);if(i<0)break;var ps=xml.lastIndexOf('<w:p ',i),pe=xml.indexOf('</w:p>',i)+6;var seg=stripHl(xml.slice(ps,pe));xml=xml.slice(0,ps)+seg+xml.slice(pe);from=ps+seg.length;}}
   function setText(oldT,newT){var i=xml.indexOf(oldT);if(i<0)return false;xml=xml.slice(0,i)+newT+xml.slice(i+oldT.length);return true;}
   function removeRow(marker){var b=rowBounds(marker);if(!b)return;xml=xml.slice(0,b.start)+xml.slice(b.end);}
+  function paraStart(i){ return Math.max(xml.lastIndexOf('<w:p ',i), xml.lastIndexOf('<w:p>',i)); }
+  function removePara(text){
+    var i=xml.indexOf(text); if(i<0) return;
+    var ps=paraStart(i), pe=xml.indexOf('</w:p>',i);
+    if(ps<0||pe<0) return;
+    xml=xml.slice(0,ps)+xml.slice(pe+6);
+  }
   function fillRow(marker,qtd,unit,total){
     var b=rowBounds(marker);if(!b)return;
     var seg=xml.slice(b.start,b.end);
@@ -1514,6 +1521,32 @@ function gerarXmlProposta(xml, D, extenso){
   setText('PREFEITURA MUNICIPAL DE XXXXXXXXXXX',esc(D.entidade));
   stripHlPara('Curitiba,'); stripHlPara('\u00a0Curitiba/PR, ');
   stripHlPara(esc(D.entidade));
+
+  // ===== 0.1) Público-alvo: só menciona os segmentos que estão no projeto =====
+  // Deriva dos quantitativos reais (um segmento selecionado sem escolas elegíveis não entra no texto).
+  var temEI=(D.p.explorador.qtd>0)||(D.p.lego_duplo.qtd>0)||(D.det.lapbook_g4g5>0);
+  var temAI=(D.p.comp_ia5.qtd>0)||(D.p.comp_ia8.qtd>0)||(D.det.l1+D.det.l2+D.det.l3+D.det.l4+D.det.l5+D.det.l2a5_leg>0);
+  var temAF=(D.p.comp_ia11.qtd>0)||(D.det.l6+D.det.l7+D.det.l8+D.det.l9+D.det.l6a9_leg>0);
+  if(!temEI&&!temAI&&!temAF){ temEI=true; temAI=true; temAF=true; } // segurança: nunca deixa o texto vazio
+  var umSoSegmento=([temEI,temAI,temAF].filter(Boolean).length===1);
+
+  function publicoAlvo(tr){ // tr = travessão usado no trecho ('' ou '−')
+    var ef='';
+    if(temAI&&temAF) ef='Anos Iniciais e Finais';
+    else if(temAI) ef='Anos Iniciais';
+    else if(temAF) ef='Anos Finais';
+    var fund = ef ? (tr ? ('ao Ensino Fundamental '+tr+' '+ef+' '+tr) : ('ao Ensino Fundamental, '+ef)) : '';
+    if(temEI&&fund) return 'à Educação Infantil e '+fund;
+    if(temEI) return 'à Educação Infantil';
+    return fund;
+  }
+
+  // Página 2 — carta de apresentação
+  setText('à Educação Infantil e ao Ensino Fundamental, Anos Iniciais e Finais, respeitando as características de cada etapa',
+    esc(publicoAlvo('')+', respeitando as características '+(umSoSegmento?'da etapa':'de cada etapa')));
+  // Página 3 — planos de aula (ficha técnica da plataforma)
+  setText('destinados à Educação Infantil e ao Ensino Fundamental − Anos Iniciais e Finais −,',
+    esc('destinados '+publicoAlvo('−')+','));
 
   // ===== 1.1) Plataforma =====
   // O template V04.2026 pede o VALOR MENSAL por licença; o preço do simulador é anual (12 meses).
@@ -1563,6 +1596,11 @@ function gerarXmlProposta(xml, D, extenso){
     removeRow('45834 – CONJUNTO'); removeRow('45650 – MOTOR');
     removeRow('45652 - LEGO'); removeRow('45657 - PACOTE');
     removeSection('FUTURE EDITION (45834)','PLACA DE PROGRAMAÇÃO BBC MICRO:BIT');
+  }
+  // Motores, controladores e cartões só existem no FLL dos Anos Iniciais: sem eles, apaga a
+  // chamada "Para estudantes dos Anos Iniciais..." e os descritivos dos três itens (45650/45652/45657).
+  if(!(P.fll_motor.qtd>0)){
+    removeSection('Para estudantes dos Anos Iniciais, é necessário adquirir','PLACA DE PROGRAMAÇÃO BBC MICRO:BIT');
   }
   prod('MULTI-CHARGER USB-C 8+',P.mc_ai);
   prod('MULTI-CHARGER USB-C 11+',P.mc_af);
@@ -1619,6 +1657,26 @@ function gerarXmlProposta(xml, D, extenso){
     seg=stripHl(seg);
     xml=xml.slice(0,b.start)+seg+xml.slice(b.end);
     produtosTot+=paraTot;
+
+    // Ficha técnica do paradidático: a tabela e os parágrafos seguem o que foi vendido
+    if(lapQ<=0){
+      removeRow('Lapbook - G4'); removeRow('Lapbook - G5');
+      removePara('Para os alunos da Educação Infantil');
+    }
+    if(livAIQ<=0){
+      ['1º','2º','3º','4º','5º'].forEach(function(a){ removeRow('Livro Nexis - '+a+' Ano'); });
+    }
+    if(livAFQ<=0){
+      ['6º','7º','8º','9º'].forEach(function(a){ removeRow('Livro Nexis - '+a+' Ano'); });
+    }
+    if(livAIQ<=0&&livAFQ<=0){
+      removePara('Do 1º ao 9º ano, são disponibilizados livros');
+      removePara('Os livros possuem registro ISBN');
+    }else{
+      if(livAIQ<=0) setText('Do 1º ao 9º ano','Do 6º ao 9º ano');
+      else if(livAFQ<=0) setText('Do 1º ao 9º ano','Do 1º ao 5º ano');
+      if(!(det.l1>0)) setText(' Para o 1º ano, o material integra atividades complementares e lapbook.','');
+    }
   }else{
     removeRow('MATERIAL PARADIDÁTICO');
     removeSection('MATERIAL PARADIDÁTICO','ANEXO II');
